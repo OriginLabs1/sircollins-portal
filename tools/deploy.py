@@ -1,33 +1,42 @@
 #!/usr/bin/env python3
 """Deploy dist/ to Cloudflare Pages without Wrangler.
 
-Wrangler is only an HTTP client. This talks to the same endpoint:
+Wrangler is only an HTTP client. This replicates what it does, in order:
 
-    POST /accounts/{account_id}/pages/projects/{project_name}/deployments
-    Content-Type: multipart/form-data
-      manifest = JSON {"<path>": "<sha256>"}
-      <sha256> = file bytes
+  1. GET  /accounts/{a}/pages/projects/{p}/upload-token      -> short-lived JWT
+  2. POST /pages/assets/check-missing                        -> hashes the edge lacks
+  3. POST /pages/assets/upload                               -> base64 asset bodies
+  4. POST /pages/assets/upsert-hashes                        -> record known hashes
+  5. POST /accounts/{a}/pages/projects/{p}/deployments       -> manifest of path -> hash
 
-Standard library only (urllib, hashlib, secrets, json). No pip install.
-Authentication is unavoidable: the endpoint requires a token holding
-"Account · Cloudflare Pages · Edit". This script reads it from the
-environment or from ~/.cloudflare-token (mode 600) and never prints it.
+Three details that are easy to get wrong, all verified against Wrangler's
+source and then against a live deployment:
+
+  - manifest keys carry a leading slash: "/index.html", not "index.html";
+  - "_headers", "_redirects" and "_routes.json" are NOT assets. They are
+    consumed as configuration and sent as dedicated parts of the deployment
+    request, because Pages never serves them;
+  - the asset key is NOT a SHA-256 of the file. Wrangler computes
+    blake3(base64(contents) + extension)[0:32] (see tools/blake3.py).
+    Getting this wrong yields a deployment that 500s at every path.
+
+Standard library only (urllib, base64, json, pathlib). No pip install.
+The one non-obvious dependency, BLAKE3, is implemented in tools/blake3.py
+for the same reason: it cannot be installed here.
+Authentication is unavoidable: the API token needs
+"Account · Cloudflare Pages · Edit". Read from CLOUDFLARE_API_TOKEN or
+~/.cloudflare-token (mode 600); never taken from argv, never printed.
 
 Usage:
-    python3 tools/deploy.py --dry-run          # build the manifest, touch no network
-    python3 tools/deploy.py                    # deploy dist/ to production
-    python3 tools/deploy.py --preview          # deploy as a preview instead
-    python3 tools/deploy.py --account <id>     # override the account id
-
-Environment:
-    CLOUDFLARE_API_TOKEN   preferred token source
-    CLOUDFLARE_ACCOUNT_ID  optional account id override
+    python3 tools/deploy.py --dry-run
+    python3 tools/deploy.py
+    python3 tools/deploy.py --preview --branch staging
 """
 
 from __future__ import annotations
 
 import argparse
-import hashlib
+import base64
 import json
 import mimetypes
 import os
@@ -37,6 +46,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from blake3 import pages_asset_hash
+
 API = "https://api.cloudflare.com/client/v4"
 
 # Account ids are identifiers, not secrets: they appear in dashboard URLs.
@@ -44,9 +55,14 @@ DEFAULT_ACCOUNT_ID = "76100d2d567029895ef9b581b6fa728b"
 DEFAULT_PROJECT = "sircollins-pwa"
 TOKEN_FILE = Path.home() / ".cloudflare-token"
 
-# Cloudflare Pages ignores these at the edge; keep them out of the manifest.
+# Consumed as config by Pages; sent as deployment parts, never uploaded as assets.
+CONFIG_FILES = ("_headers", "_redirects", "_routes.json")
 IGNORED_NAMES = {".DS_Store", "Thumbs.db"}
 IGNORED_DIRS = {".git", "__pycache__", ".wrangler"}
+
+# Keep each asset upload request modest; the API caps payload size.
+BATCH_FILES = 40
+BATCH_BYTES = 8 * 1024 * 1024
 
 
 class DeployError(RuntimeError):
@@ -58,30 +74,25 @@ def read_token() -> str:
     if token:
         return token
     if TOKEN_FILE.is_file():
+        mode = TOKEN_FILE.stat().st_mode & 0o777
+        if mode & 0o077:
+            print(
+                f"warning: {TOKEN_FILE} is group/world readable (mode {mode:o});"
+                " run chmod 600 on it",
+                file=sys.stderr,
+            )
         token = TOKEN_FILE.read_text(encoding="utf-8").strip()
         if token:
-            mode = TOKEN_FILE.stat().st_mode & 0o777
-            if mode & 0o077:
-                print(
-                    f"warning: {TOKEN_FILE} is readable by other users "
-                    f"(mode {mode:o}); consider chmod 600",
-                    file=sys.stderr,
-                )
             return token
     raise DeployError(
         "no token found.\n"
         "  Set CLOUDFLARE_API_TOKEN, or write the token to "
         f"{TOKEN_FILE} and chmod 600 it.\n"
-        '  The token needs: Account · Cloudflare Pages · Edit'
+        "  The token needs: Account · Cloudflare Pages · Edit"
     )
 
 
-def sha256_hex(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
 def collect_files(root: Path) -> list[tuple[str, bytes]]:
-    """Return (deployment_path, bytes) for every file in root, sorted for stability."""
     if not root.is_dir():
         raise DeployError(f"output directory not found: {root}")
     entries: list[tuple[str, bytes]] = []
@@ -93,21 +104,35 @@ def collect_files(root: Path) -> list[tuple[str, bytes]]:
             continue
         if path.name in IGNORED_NAMES:
             continue
-        # Pages expects leading-slash-free paths in the manifest.
         entries.append(("/".join(rel.parts), path.read_bytes()))
     if not entries:
         raise DeployError(f"no files found in {root}")
     return entries
 
 
-def build_manifest(files: list[tuple[str, bytes]]) -> dict[str, str]:
-    return {path: sha256_hex(data) for path, data in files}
+def split_config(
+    files: list[tuple[str, bytes]],
+) -> tuple[list[tuple[str, bytes]], dict[str, bytes]]:
+    """Separate deployable assets from Pages configuration files."""
+    assets = [(p, d) for p, d in files if p not in CONFIG_FILES]
+    config = {p: d for p, d in files if p in CONFIG_FILES}
+    return assets, config
+
+
+def build_manifest(assets: list[tuple[str, bytes]]) -> dict[str, str]:
+    """Manifest keys need the leading slash; values are Pages asset hashes.
+
+    The hash is blake3(base64(contents) + extension)[0:32], not a SHA-256 of
+    the raw bytes. Cloudflare resolves assets by this key, so any other hash
+    produces a deployment that 500s.
+    """
+    return {f"/{path}": pages_asset_hash(path, data) for path, data in assets}
 
 
 def encode_multipart(
-    fields: dict[str, str], files: list[tuple[str, bytes]]
+    fields: dict[str, str], parts: list[tuple[str, bytes]] | None = None
 ) -> tuple[bytes, str]:
-    """Encode a multipart/form-data body. File parts are named by their hash."""
+    """multipart/form-data. `parts` are (name, bytes) for config files."""
     boundary = f"----sircollins{secrets.token_hex(16)}"
     chunks: list[bytes] = []
 
@@ -118,12 +143,11 @@ def encode_multipart(
             f"\r\n{value}\r\n".encode()
         )
 
-    for path, data in files:
-        digest = sha256_hex(data)
-        content_type = mimetypes.guess_type(path)[0] or "application/octet-stream"
+    for name, data in parts or []:
+        content_type = mimetypes.guess_type(name)[0] or "application/octet-stream"
         chunks.append(
             f"--{boundary}\r\n"
-            f'Content-Disposition: form-data; name="{digest}"; filename="{digest}"\r\n'
+            f'Content-Disposition: form-data; name="{name}"; filename="{name}"\r\n'
             f"Content-Type: {content_type}\r\n"
             f"\r\n".encode()
         )
@@ -139,88 +163,170 @@ def request_json(
     url: str,
     token: str,
     *,
+    payload: object | None = None,
     body: bytes | None = None,
     content_type: str | None = None,
-    timeout: int = 120,
+    timeout: int = 180,
 ) -> dict:
+    data = body
     headers = {"Authorization": f"Bearer {token}"}
+    if payload is not None:
+        data = json.dumps(payload).encode()
+        headers["Content-Type"] = "application/json"
     if content_type is not None:
         headers["Content-Type"] = content_type
-    request = urllib.request.Request(url, data=body, headers=headers, method=method)
+
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+            payload_out = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as error:
-        detail = error.read().decode("utf-8", "replace")
+        raw = error.read().decode("utf-8", "replace")
         try:
-            parsed = json.loads(detail)
-            errors = "; ".join(
+            parsed = json.loads(raw)
+            detail = "; ".join(
                 f"[{item.get('code')}] {item.get('message')}"
                 for item in parsed.get("errors", [])
-            )
-            detail = errors or detail
+            ) or raw
         except json.JSONDecodeError:
-            pass
-        raise DeployError(f"{method} {url} -> HTTP {error.code}: {detail}") from error
+            detail = raw[:400]
+        raise DeployError(
+            f"{method} {url.split('/client/v4')[-1]} -> HTTP {error.code}: {detail}"
+        ) from error
     except urllib.error.URLError as error:
         raise DeployError(f"{method} {url} -> network error: {error.reason}") from error
 
-    if not payload.get("success", False):
+    # A 200 is not success: the API reports failures in the body too. Silently
+    # ignoring this is how a failed asset upload becomes a deployment that
+    # serves nothing, so treat it as fatal.
+    if not payload_out.get("success", False):
         errors = "; ".join(
             f"[{item.get('code')}] {item.get('message')}"
-            for item in payload.get("errors", [])
+            for item in payload_out.get("errors") or []
         )
-        raise DeployError(f"{method} {url} -> API error: {errors or payload}")
-    return payload
+        raise DeployError(
+            f"{method} {url.split('/client/v4')[-1]} -> API reported failure: "
+            f"{errors or payload_out}"
+        )
+    return payload_out
+
+
+def api(path: str) -> str:
+    return f"{API}{path}"
 
 
 def ensure_project(token: str, account_id: str, project: str) -> bool:
-    """Create the project if missing. Returns True when it was created."""
-    base = f"{API}/accounts/{account_id}/pages/projects"
+    base = api(f"/accounts/{account_id}/pages/projects")
     try:
         request_json("GET", f"{base}/{project}", token)
         return False
     except DeployError as error:
-        if "HTTP 404" not in str(error) and "HTTP 8000007" not in str(error):
+        message = str(error)
+        if "HTTP 404" not in message and "8000007" not in message:
             raise
-
-    body = json.dumps(
-        {"name": project, "production_branch": "main"}
-    ).encode()
     request_json(
-        "POST", base, token, body=body, content_type="application/json"
+        "POST",
+        base,
+        token,
+        payload={"name": project, "production_branch": "main"},
     )
     return True
 
 
-def deploy(
+def upload_assets(
+    token: str, account_id: str, project: str, assets: list[tuple[str, bytes]]
+) -> None:
+    """Push asset bodies the edge does not already have."""
+    if not assets:
+        return
+    jwt = request_json(
+        "GET",
+        api(f"/accounts/{account_id}/pages/projects/{project}/upload-token"),
+        token,
+    )["result"]["jwt"]
+
+    keyed = [(pages_asset_hash(path, data), path, data) for path, data in assets]
+    hashes = {key for key, _, _ in keyed}
+    missing = set(
+        request_json(
+            "POST",
+            api("/pages/assets/check-missing"),
+            jwt,
+            payload={"hashes": sorted(hashes)},
+        )["result"]
+    )
+
+    pending = [(key, path, data) for key, path, data in keyed if key in missing]
+    if not pending:
+        print("assets: all hashes already present at the edge")
+    else:
+        print(f"assets: uploading {len(pending)} of {len(assets)} (rest cached)")
+
+    batch: list[dict[str, object]] = []
+    batch_bytes = 0
+
+    def flush() -> None:
+        nonlocal batch, batch_bytes
+        if not batch:
+            return
+        request_json(
+            "POST", api("/pages/assets/upload"), jwt, payload=batch
+        )
+        batch = []
+        batch_bytes = 0
+
+    for key, path, data in pending:
+        batch.append(
+            {
+                "key": key,
+                "value": base64.b64encode(data).decode(),
+                "metadata": {
+                    "contentType": mimetypes.guess_type(path)[0]
+                    or "application/octet-stream"
+                },
+                "base64": True,
+            }
+        )
+        batch_bytes += len(data)
+        if len(batch) >= BATCH_FILES or batch_bytes >= BATCH_BYTES:
+            flush()
+    flush()
+
+    request_json(
+        "POST",
+        api("/pages/assets/upsert-hashes"),
+        jwt,
+        payload={"hashes": sorted(hashes)},
+    )
+
+
+def create_deployment(
     token: str,
     account_id: str,
     project: str,
-    out_dir: Path,
+    assets: list[tuple[str, bytes]],
+    config: dict[str, bytes],
     *,
-    preview: bool,
+    branch: str,
+    commit_message: str,
 ) -> dict:
-    files = collect_files(out_dir)
-    manifest = build_manifest(files)
-    total = sum(len(data) for _, data in files)
-
+    manifest = build_manifest(assets)
     fields = {
         "manifest": json.dumps(manifest),
-        "commit_message": f"Deploy {len(files)} files from {out_dir}",
+        "branch": branch,
+        "commit_message": commit_message,
         "commit_dirty": "false",
     }
-    if preview:
-        fields["branch"] = "preview"
-
-    body, content_type = encode_multipart(fields, files)
-    url = f"{API}/accounts/{account_id}/pages/projects/{project}/deployments"
-
-    print(
-        f"uploading {len(files)} files, {total} bytes "
-        f"(multipart body {len(body)} bytes) to {project}"
+    body, content_type = encode_multipart(
+        fields, [(name, data) for name, data in config.items()]
     )
-    payload = request_json("POST", url, token, body=body, content_type=content_type)
+    payload = request_json(
+        "POST",
+        api(f"/accounts/{account_id}/pages/projects/{project}/deployments"),
+        token,
+        body=body,
+        content_type=content_type,
+    )
     return payload["result"]
 
 
@@ -229,39 +335,55 @@ def main(argv: list[str] | None = None) -> int:
         description="Deploy a directory to Cloudflare Pages via the REST API."
     )
     parser.add_argument("--dir", default="dist", type=Path, help="output directory")
-    parser.add_argument("--project", default=DEFAULT_PROJECT, help="Pages project name")
+    parser.add_argument("--project", default=DEFAULT_PROJECT, help="Pages project")
     parser.add_argument(
         "--account",
         default=os.environ.get("CLOUDFLARE_ACCOUNT_ID", DEFAULT_ACCOUNT_ID),
         help="account id",
     )
+    parser.add_argument("--branch", default="main", help="branch to deploy")
     parser.add_argument("--preview", action="store_true", help="deploy as preview")
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="list the manifest and exit without touching the network",
+        help="show the manifest and exit without touching the network",
+    )
+    parser.add_argument(
+        "--commit-message",
+        default="Deploy via tools/deploy.py",
+        help="commit message recorded on the deployment",
     )
     args = parser.parse_args(argv)
 
     try:
         files = collect_files(args.dir)
-        manifest = build_manifest(files)
+        assets, config = split_config(files)
+        manifest = build_manifest(assets)
 
         if args.dry_run:
-            print(f"dry run: {len(files)} files in {args.dir}")
+            print(f"dry run: {len(assets)} assets, {len(config)} config file(s)")
             for path in sorted(manifest):
-                size = next(len(d) for p, d in files if p == path)
-                print(f"  /{path}  {size:>8} B  {manifest[path][:12]}")
+                size = next(len(d) for p, d in assets if f"/{p}" == path)
+                print(f"  {path}  {size:>8} B  {manifest[path][:12]}")
+            for name in sorted(config):
+                print(f"  {name}  {len(config[name]):>8} B  (config part)")
             print(f"manifest entries: {len(manifest)}")
             print("no network calls made")
             return 0
 
         token = read_token()
-        created = ensure_project(token, args.account, args.project)
-        if created:
+        if ensure_project(token, args.account, args.project):
             print(f"created Pages project {args.project}")
-        result = deploy(
-            token, args.account, args.project, args.dir, preview=args.preview
+
+        upload_assets(token, args.account, args.project, assets)
+        result = create_deployment(
+            token,
+            args.account,
+            args.project,
+            assets,
+            config,
+            branch=args.branch,
+            commit_message=args.commit_message,
         )
     except DeployError as error:
         print(f"error: {error}", file=sys.stderr)
@@ -270,7 +392,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"deployment: {result.get('id')}")
     print(f"environment: {result.get('environment')}")
     print(f"url: {result.get('url')}")
-    for alias in result.get("aliases", []):
+    # Direct uploads return "aliases": null rather than an empty list.
+    for alias in result.get("aliases") or []:
         print(f"alias: {alias}")
     return 0
 

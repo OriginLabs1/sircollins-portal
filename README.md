@@ -60,9 +60,15 @@ Deviation from `WORKFLOWS.md` Workflow C: the artifact directory is `dist/`, not
 
 Wrangler is only a client for the Pages REST API. `tools/deploy.py` calls the same
 endpoint directly — `POST /accounts/{account_id}/pages/projects/{project}/deployments`
-with a `multipart/form-data` body: a `manifest` field mapping each path to its SHA-256,
-plus one part per file named by that hash. No npm, no pip, no network access beyond the
-API itself.
+with a `multipart/form-data` body: a `manifest` field mapping each path to its asset
+hash, plus `_headers` / `_redirects` as config parts (Pages consumes those and never
+serves them). No npm, no pip, no network access beyond the API itself.
+
+Asset identity is the subtle part. Pages does not key files by SHA-256; Wrangler uses
+`blake3(base64(contents) + extension)[0:32]`, so a SHA-256 manifest produces a
+deployment that returns **500 at every path**. `tools/blake3.py` implements BLAKE3 in
+pure Python for this reason, and `tools/deploy.py` uses it for both the manifest and
+the `/pages/assets/*` upload keys.
 
 ```sh
 python3 tools/deploy.py --dry-run              # manifest only, no network calls
