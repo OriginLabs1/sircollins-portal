@@ -1,0 +1,6 @@
+# Cloudflare Pages project: sircollins-pwa
+# Deploy: npx wrangler pages deploy   (reads pages_build_output_dir below)
+
+name = "sircollins-pwa"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-10-01"

@@ -56,6 +56,29 @@ npm run deploy
 Deviation from `WORKFLOWS.md` Workflow C: the artifact directory is `dist/`, not
 `src/frontend/`, because Vite emits there. Everything else in that workflow applies.
 
+### Deploy without Wrangler (Python, stdlib only)
+
+Wrangler is only a client for the Pages REST API. `tools/deploy.py` calls the same
+endpoint directly — `POST /accounts/{account_id}/pages/projects/{project}/deployments`
+with a `multipart/form-data` body: a `manifest` field mapping each path to its SHA-256,
+plus one part per file named by that hash. No npm, no pip, no network access beyond the
+API itself.
+
+```sh
+python3 tools/deploy.py --dry-run              # manifest only, no network calls
+python3 tools/deploy.py                        # production deploy of dist/
+python3 tools/deploy.py --preview              # preview deployment
+python3 tools/deploy.py --account <id>         # override the account id
+```
+
+It reads `CLOUDFLARE_API_TOKEN` from the environment, else from `~/.cloudflare-token`
+(mode 600; it warns if the file is group/world readable). It never prints the token and
+never takes it as a command-line argument, so it stays out of shell history.
+
+What this does **not** avoid: authentication. The endpoint requires a token holding
+*Account · Cloudflare Pages · Edit*, exactly as Wrangler does. Wrangler's OAuth login is
+the only path that needs no token at all — it needs one browser click instead.
+
 ## Conventions
 
 - No `any`. No non-null assertions in place of real checks — narrow with `query<T>()` helpers.
