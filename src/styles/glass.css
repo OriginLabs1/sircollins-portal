@@ -1,0 +1,74 @@
+/**
+ * Liquid Glass.
+ *
+ * Rules enforced here:
+ * - Exactly one backdrop-filter layer per surface (nested blurs are what
+ *   make glassmorphism janky).
+ * - The highlight is a ::before gradient, not a second blur.
+ * - Hover shifts transform only; colour/shadow come from custom properties
+ *   so the compositor handles them.
+ * - Where backdrop-filter is unsupported, an opaque surface is used instead,
+ *   so text contrast never depends on the blur.
+ */
+
+.glass {
+  position: relative;
+  isolation: isolate;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  box-shadow:
+    0 1px 0 0 rgb(255 255 255 / 8%) inset,
+    0 18px 40px -24px rgb(0 0 0 / 70%);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+
+/* Specular sheen across the top edge. */
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    160deg,
+    rgb(255 255 255 / 14%) 0%,
+    rgb(255 255 255 / 4%) 26%,
+    transparent 55%,
+    rgb(255 255 255 / 6%) 100%
+  );
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.teaser:hover,
+.teaser:focus-within {
+  border-color: var(--hairline-strong);
+  box-shadow:
+    0 1px 0 0 rgb(255 255 255 / 12%) inset,
+    0 28px 60px -28px rgb(0 0 0 / 78%),
+    0 0 0 1px color-mix(in oklab, var(--aurora-2) 22%, transparent);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: rgb(14 16 32 / 92%);
+  }
+
+  .site-header {
+    background: rgb(5 6 15 / 96%);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .site-header {
+    background: rgb(10 12 24 / 97%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass::before {
+    display: none;
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "Sir Collins Portal — Sovereign Digital Twin",
+  "short_name": "Sir Collins",
+  "description": "Offline-first, machine-readable encyclopedia of leadership, ICT strategy, and creative practice.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#05060f",
+  "theme_color": "#05060f",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Inspirations & Reflections",
+      "url": "/#reflections"
+    },
+    {
+      "name": "Contact",
+      "url": "/#contact-title"
+    }
+  ]
+}

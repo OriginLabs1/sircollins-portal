@@ -1,0 +1,29 @@
+{
+  "$comment": "DRAFT content. Replace summaries with verbatim material from Sir Collins before publishing.",
+  "items": [
+    {
+      "id": "sovereignty-by-design",
+      "title": "Sovereignty by Design",
+      "summary": "Data ownership is not a feature you add at the end. It is the first architectural decision, and every later choice inherits it.",
+      "theme": "Sovereignty",
+      "publishedAt": "2026-01-12",
+      "tags": ["local-first", "architecture", "ownership"]
+    },
+    {
+      "id": "leadership-as-systems-work",
+      "title": "Leadership as Systems Work",
+      "summary": "A leader who optimises individual effort mistakes motion for progress. The leverage is in the connections, not the nodes.",
+      "theme": "Leadership",
+      "publishedAt": "2026-02-03",
+      "tags": ["leadership", "systems-thinking"]
+    },
+    {
+      "id": "the-tutor-imperative",
+      "title": "The Tutor Imperative",
+      "summary": "Teaching is the only profession that manufactures its own successors. Royal tutoring is the discipline of building judgement, not recall.",
+      "theme": "Mentorship",
+      "publishedAt": "2026-02-24",
+      "tags": ["teaching", "judgement", "mentorship"]
+    }
+  ]
+}
