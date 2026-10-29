@@ -77,9 +77,21 @@ python3 tools/deploy.py --preview              # preview deployment
 python3 tools/deploy.py --account <id>         # override the account id
 ```
 
-It reads `CLOUDFLARE_API_TOKEN` from the environment, else from `~/.cloudflare-token`
-(mode 600; it warns if the file is group/world readable). It never prints the token and
-never takes it as a command-line argument, so it stays out of shell history.
+It reads the token from the first of these that exists:
+
+| Order | Location | Scope | Use when |
+|---|---|---|---|
+| 1 | `CLOUDFLARE_API_TOKEN` env var | that shell | CI, or a one-off `export` |
+| 2 | `CLOUDFLARE_API_TOKEN=...` in `.env` | this checkout | project-scoped token; gitignored |
+| 3 | token alone in `~/.cloudflare-token` | every directory | simplest, works from anywhere |
+
+It never prints the token and never takes it as a command-line argument, so it
+stays out of shell history. Mode-checked: it warns if the file is group/world
+readable.
+
+```sh
+python3 tools/deploy.py --verify     # token identity, account, Pages + zone access
+```
 
 What this does **not** avoid: authentication. The endpoint requires a token holding
 *Account · Cloudflare Pages · Edit*, exactly as Wrangler does. Wrangler's OAuth login is

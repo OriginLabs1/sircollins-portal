@@ -24,10 +24,14 @@ Standard library only (urllib, base64, json, pathlib). No pip install.
 The one non-obvious dependency, BLAKE3, is implemented in tools/blake3.py
 for the same reason: it cannot be installed here.
 Authentication is unavoidable: the API token needs
-"Account · Cloudflare Pages · Edit". Read from CLOUDFLARE_API_TOKEN or
-~/.cloudflare-token (mode 600); never taken from argv, never printed.
+"Account · Cloudflare Pages · Edit". Resolution order:
+  1. CLOUDFLARE_API_TOKEN in the environment (CI, one-off `export`)
+  2. CLOUDFLARE_API_TOKEN=... in the project's .env (gitignored)
+  3. the token alone in ~/.cloudflare-token (mode 600)
+Never taken from argv, never printed.
 
 Usage:
+    python3 tools/deploy.py --verify         # what can this token do?
     python3 tools/deploy.py --dry-run
     python3 tools/deploy.py
     python3 tools/deploy.py --preview --branch staging
@@ -53,7 +57,9 @@ API = "https://api.cloudflare.com/client/v4"
 # Account ids are identifiers, not secrets: they appear in dashboard URLs.
 DEFAULT_ACCOUNT_ID = "76100d2d567029895ef9b581b6fa728b"
 DEFAULT_PROJECT = "sircollins-pwa"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 TOKEN_FILE = Path.home() / ".cloudflare-token"
+ENV_FILE = PROJECT_ROOT / ".env"
 
 # Consumed as config by Pages; sent as deployment parts, never uploaded as assets.
 CONFIG_FILES = ("_headers", "_redirects", "_routes.json")
@@ -69,26 +75,71 @@ class DeployError(RuntimeError):
     """Configuration or API failure, reported without a traceback."""
 
 
+def read_env_file(path: Path) -> dict[str, str]:
+    """Parse a .env file. Values may be quoted; `export ` is tolerated.
+
+    Deliberately minimal: no interpolation, no `source`, nothing that can run
+    code. This only needs to carry two settings.
+    """
+    values: dict[str, str] = {}
+    if not path.is_file():
+        return values
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        if key.startswith("export "):
+            key = key[len("export ") :].strip()
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        if key:
+            values[key] = value
+    return values
+
+
+def _warn_if_exposed(path: Path, label: str) -> None:
+    mode = path.stat().st_mode & 0o777
+    if mode & 0o077:
+        print(
+            f"warning: {label} is group/world readable (mode {mode:o});"
+            f" run chmod 600 on it",
+            file=sys.stderr,
+        )
+
+
 def read_token() -> str:
+    """Token precedence: environment, then ./.env, then ~/.cloudflare-token.
+
+    The environment wins so CI can override; .env keeps the credential scoped
+    to this checkout (it is gitignored); the home file is the fallback that
+    works from any directory.
+    """
     token = os.environ.get("CLOUDFLARE_API_TOKEN", "").strip()
     if token:
         return token
+
+    if ENV_FILE.is_file():
+        env_token = read_env_file(ENV_FILE).get("CLOUDFLARE_API_TOKEN", "").strip()
+        if env_token:
+            _warn_if_exposed(ENV_FILE, str(ENV_FILE))
+            return env_token
+
     if TOKEN_FILE.is_file():
-        mode = TOKEN_FILE.stat().st_mode & 0o777
-        if mode & 0o077:
-            print(
-                f"warning: {TOKEN_FILE} is group/world readable (mode {mode:o});"
-                " run chmod 600 on it",
-                file=sys.stderr,
-            )
+        _warn_if_exposed(TOKEN_FILE, str(TOKEN_FILE))
         token = TOKEN_FILE.read_text(encoding="utf-8").strip()
         if token:
             return token
+
     raise DeployError(
-        "no token found.\n"
-        "  Set CLOUDFLARE_API_TOKEN, or write the token to "
-        f"{TOKEN_FILE} and chmod 600 it.\n"
-        "  The token needs: Account · Cloudflare Pages · Edit"
+        "no token found. Any one of these works:\n"
+        f"  1. CLOUDFLARE_API_TOKEN in the environment (CI)\n"
+        f"  2. CLOUDFLARE_API_TOKEN=... in {ENV_FILE} (this checkout, gitignored)\n"
+        f"  3. the token alone in {TOKEN_FILE} (any directory)\n"
+        "  The token needs: Account · Cloudflare Pages · Edit\n"
+        "  Run `python3 tools/deploy.py --verify` to test it."
     )
 
 
@@ -330,15 +381,51 @@ def create_deployment(
     return payload["result"]
 
 
+def verify_token(token: str, account_id: str, project: str) -> int:
+    """Report what the token can do, without ever printing the token."""
+    status = request_json("GET", api("/user/tokens/verify"), token)["result"]
+    print(f"token status : {status.get('status')} (id {status.get('id')})")
+
+    account = request_json("GET", api(f"/accounts/{account_id}"), token)["result"]
+    print(f"account      : {account.get('name')} ({account_id})")
+
+    projects = request_json(
+        "GET", api(f"/accounts/{account_id}/pages/projects?per_page=10"), token
+    )["result"]
+    names = [p.get("name") for p in projects]
+    print(f"pages access : yes, {len(names)} project(s) visible")
+
+    if project in names:
+        detail = request_json(
+            "GET", api(f"/accounts/{account_id}/pages/projects/{project}"), token
+        )["result"]
+        domains = detail.get("domains") or []
+        print(f"target       : {project} exists, domains: {', '.join(domains)}")
+    else:
+        print(f"target       : {project} not found (the next deploy would create it)")
+
+    try:
+        zones = request_json("GET", api("/zones?per_page=1"), token)["result"]
+        print(f"zone access  : yes ({len(zones)} zone(s) on this page)")
+    except DeployError:
+        print("zone access  : no (fine for deploys; needed to edit DNS/custom domains)")
+
+    print("\ntoken is usable for deploys: yes")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Deploy a directory to Cloudflare Pages via the REST API."
     )
     parser.add_argument("--dir", default="dist", type=Path, help="output directory")
     parser.add_argument("--project", default=DEFAULT_PROJECT, help="Pages project")
+    env_values = read_env_file(ENV_FILE)
     parser.add_argument(
         "--account",
-        default=os.environ.get("CLOUDFLARE_ACCOUNT_ID", DEFAULT_ACCOUNT_ID),
+        default=os.environ.get("CLOUDFLARE_ACCOUNT_ID")
+        or env_values.get("CLOUDFLARE_ACCOUNT_ID")
+        or DEFAULT_ACCOUNT_ID,
         help="account id",
     )
     parser.add_argument("--branch", default="main", help="branch to deploy")
@@ -349,6 +436,11 @@ def main(argv: list[str] | None = None) -> int:
         help="show the manifest and exit without touching the network",
     )
     parser.add_argument(
+        "--verify",
+        action="store_true",
+        help="check the configured token's identity and permissions, then exit",
+    )
+    parser.add_argument(
         "--commit-message",
         default="Deploy via tools/deploy.py",
         help="commit message recorded on the deployment",
@@ -356,6 +448,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.verify:
+            return verify_token(read_token(), args.account, args.project)
+
         files = collect_files(args.dir)
         assets, config = split_config(files)
         manifest = build_manifest(assets)
