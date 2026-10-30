@@ -71,9 +71,12 @@
    intentional; do not invent a year). “Reality hint” is a label; the copy beneath it is his.
 4. **Stage image**: `public/media/tedx-jalingo.jpg` is served as supplied at 1080×856. Every
    image needs real `width`/`height`, `loading="lazy"` below the fold, and alt text that
-   carries the slide's quote. Add new media to `SHELL_ASSETS` and bump `CACHE_VERSION`.
+   carries the slide's quote. The mat links to the full-size file; keep `rel="noopener"`.
+   Add new media to `SHELL_ASSETS` and bump `CACHE_VERSION`.
 5. **Contact**: both `access1@tutamail.com` and `sircollins1@protonmail.com` remain visible in
-   the contact panel and the personal address in the footer.
+   the contact panel and the personal address in the footer. Keep Cloudflare Email Address
+   Obfuscation **off** (zone setting `email_obfuscation`) so the HTML carries the real
+   addresses; after a deploy, `curl` the home page and confirm the literal addresses appear.
 
 ## Workflow F: Acknowledgment & Rarity Review
 

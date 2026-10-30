@@ -68,6 +68,12 @@ Every line of code, design decision, and feature must satisfy these criteria:
 
 > `access1@tutamail.com` is the professional channel. `sircollins1@protonmail.com` is personal.
 
+Cloudflare **Email Address Obfuscation is off** for `coreconcept1.net` (zone
+`4d46970af3e406e90186b99f07156861`). Both addresses must stay literal in the HTML so they are
+readable without JavaScript, copyable, and clickable as real `mailto:` links. Do not re-enable
+the setting; it rewrites addresses to `/cdn-cgi/l/email-protection` and hides them from
+crawlers and no-JS readers.
+
 ## 7. Interaction Model
 
 - **Reading order**: Unique Skills → Creative Expressions → Unique Concepts → From the Stage

@@ -28,7 +28,8 @@ Version `0.0.1` — the living portal. Implemented:
   creative work; `Person.knowsAbout` is derived from the same titles.
 - **Unique Concepts**: Ceremoni, Royal Discipleship and Super Birthdays, with the reality hint.
 - **From the Stage**: the TEDx Jalingo slide (`public/media/tedx-jalingo.jpg`) framed with its
-  quote, attribution and context; the image is cached by the service worker.
+  quote, attribution and context, linked to the full-size file; the image is cached by the
+  service worker.
 - **Inspirations & Reflections** (`src/data/entries.json`): five verbatim entries, each with
   Love, Acknowledge, Share, “Acknowledged by” and a qualitative rarity symbol (hover/focus
   for the breakdown).

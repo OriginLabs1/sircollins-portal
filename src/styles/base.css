@@ -1586,6 +1586,7 @@ main {
 
 .stage__mat {
   position: relative;
+  display: block;
   overflow: hidden;
   border-radius: var(--radius-md);
   background: #ffffff;
@@ -1600,6 +1601,51 @@ main {
   display: block;
   width: 100%;
   height: auto;
+}
+
+.stage__mat:focus-visible {
+  outline: 2px solid var(--emblem-light);
+  outline-offset: 3px;
+}
+
+.stage__zoom {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgb(5 6 15 / 12%);
+  background: rgb(5 6 15 / 62%);
+  color: #f4f7ff;
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 260ms var(--spring), transform 260ms var(--spring);
+  pointer-events: none;
+}
+
+.stage__zoom .icon {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.stage__mat:hover .stage__zoom,
+.stage__mat:focus-visible .stage__zoom {
+  opacity: 1;
+  transform: none;
+}
+
+@media (hover: none) {
+  .stage__zoom {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .stage__figure:hover .stage__mat {
