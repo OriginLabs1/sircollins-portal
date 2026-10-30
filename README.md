@@ -2,7 +2,7 @@
 
 Sovereign Digital Twin of **Sir Collins Chris** — an offline-first, machine-readable PWA.
 
-Target domain: `sircollins.concept1.net` · Cloudflare Pages project: `sircollins-pwa`
+Target domain: `sircollins.coreconcept1.net` · Cloudflare Pages project: `sircollins-pwa`
 
 ## Governance documents
 
@@ -20,6 +20,8 @@ Read these before changing anything:
 Version `0.0.1` — core shell only. Implemented:
 
 - Strict TypeScript + Vite build (no framework, no runtime dependencies).
+- **Portrait** (`public/brand/signature.jpg`): shown in the hero, declared as
+  `Person.image` in JSON-LD, and used for Open Graph / Twitter cards.
 - **Liquid Glass** base styles: aurora field, single-layer `backdrop-filter`, spring
   cubic-beziers, `prefers-reduced-motion` and `prefers-contrast` branches.
 - **Sovereign storage adapter** (`src/lib/storage.ts`): OPFS → localStorage → in-memory,
@@ -41,6 +43,7 @@ npm run dev      # dev server on http://localhost:5173
 npm run lint     # tsc --noEmit (strict, zero errors tolerated)
 npm run test     # vitest
 npm run build    # typecheck + production bundle into dist/
+npm run deploy:api  # build, then deploy dist/ with tools/deploy.py (primary)
 npm run deploy   # build, then wrangler pages deploy dist --project-name=sircollins-pwa
 ```
 
@@ -53,8 +56,8 @@ export CLOUDFLARE_API_TOKEN=...   # never commit this, never paste it in chat
 npm run deploy
 ```
 
-Deviation from `WORKFLOWS.md` Workflow C: the artifact directory is `dist/`, not
-`src/frontend/`, because Vite emits there. Everything else in that workflow applies.
+Deviation from `WORKFLOWS.md` Workflow C: none in substance. The artifact directory is
+`dist/`, which is what Vite emits; both deploy paths use it.
 
 ### Deploy without Wrangler (Python, stdlib only)
 

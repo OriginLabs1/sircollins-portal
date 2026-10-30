@@ -218,9 +218,71 @@ main {
 
 .hero {
   display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-5) var(--space-4);
+}
+
+.hero__body {
+  display: grid;
   gap: var(--space-3);
   max-width: var(--measure);
-  padding-block: var(--space-5) var(--space-4);
+}
+
+.portrait {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  justify-self: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.portrait__frame {
+  display: block;
+  width: clamp(10.5rem, 30vw, 14.5rem);
+  filter: drop-shadow(0 22px 38px rgb(0 0 0 / 55%));
+}
+
+/* The source is a portrait on a white oval over a grey field. The clip
+   follows that oval exactly, so the grey corners never reach the page. */
+.portrait__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1020 / 1280;
+  object-fit: cover;
+  clip-path: ellipse(41.5% 42% at 50% 50%);
+  background: #ffffff;
+}
+
+.portrait figcaption {
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: center;
+}
+
+@media (min-width: 60rem) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'body portrait';
+    align-items: center;
+  }
+
+  .hero__body {
+    grid-area: body;
+  }
+
+  .portrait {
+    grid-area: portrait;
+    justify-self: end;
+  }
+
+  .portrait__frame {
+    width: clamp(13rem, 18vw, 17rem);
+  }
 }
 
 .eyebrow {

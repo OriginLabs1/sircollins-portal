@@ -5,9 +5,13 @@
  * CBOR-LD encoder later, so both representations stay in a single source.
  */
 
-export const SITE_ORIGIN = 'https://sircollins.concept1.net';
+export const SITE_ORIGIN = 'https://sircollins.coreconcept1.net';
 
 export const SITE_NAME = 'Sir Collins Chris';
+
+export const PORTRAIT_PATH = '/brand/signature.jpg';
+
+export const PORTRAIT_URL = `${SITE_ORIGIN}${PORTRAIT_PATH}`;
 
 export const CONTACT = {
   professionalEmail: 'access1@tutamail.com',
@@ -39,6 +43,7 @@ export interface PersonGraph {
   '@type': 'Person';
   name: string;
   url: string;
+  image: string;
   jobTitle: readonly string[];
   email: string;
   sameAs: readonly string[];
@@ -73,6 +78,7 @@ export function buildPersonGraph(): PersonGraph {
     '@type': 'Person',
     name: SITE_NAME,
     url: `${SITE_ORIGIN}/`,
+    image: PORTRAIT_URL,
     jobTitle: ROLES,
     email: CONTACT.professionalEmail,
     sameAs: [CONTACT.telegram],

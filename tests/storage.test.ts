@@ -93,7 +93,8 @@ describe('JSON-LD graphs', () => {
     expect(person['@type']).toBe('Person');
     expect(person.email).toBe('access1@tutamail.com');
     expect(person.jobTitle).toContain('ICT Strategist');
-    expect(person.url.startsWith('https://')).toBe(true);
+    expect(person.url).toBe('https://sircollins.coreconcept1.net/');
+    expect(person.image).toBe('https://sircollins.coreconcept1.net/brand/signature.jpg');
   });
 
   it('builds a WebSite graph in English', () => {

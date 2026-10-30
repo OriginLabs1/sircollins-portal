@@ -1,4 +1,4 @@
-# CONTEXT: Sir Collins Portal (sircollins.concept1.net)
+# CONTEXT: Sir Collins Portal (sircollins.coreconcept1.net)
 
 ## 1. Mission Statement
 
@@ -11,8 +11,9 @@ universal, and robust** digital entity.
 
 - **Principal**: Sir Collins Chris
 - **Roles**: Unique Pioneer | Leadership Consultant | Royal Tutor | ICT Strategist | Creative Genius
-- **Domain**: `sircollins.concept1.net` (Primary Entry Point)
-- **Project Directory**: `~/sircollins-portal`
+- **Domain**: `sircollins.coreconcept1.net` (primary entry point)
+- **Project Directory**: `~/projects/sircollins-portal`
+- **Portrait**: `public/brand/signature.jpg` (used in the hero, Open Graph and JSON-LD)
 
 ## 3. Architectural Pillars (Acceptance Criteria)
 
@@ -31,18 +32,24 @@ Every line of code, design decision, and feature must satisfy these criteria:
 
 ## 4. Tech Stack Constraints
 
-- **Language**: TypeScript (Strict), C++ (WASM only for compute-heavy tasks).
-- **Runtime**: Cloudflare Workers (Edge) + Browser (PWA).
-- **Storage**: SQLite WASM (`sqlite-vec` for semantic search) + OPFS.
-- **Payments**: Sovereign Adapter (Flutterwave/Paystack) via Cloudflare Workers.
-- **Deployment**: Cloudflare Pages (Project: `sircollins-pwa`).
+- **Language**: TypeScript (Strict); C++/WASM reserved for compute-heavy modules (none yet).
+- **Runtime**: Browser (PWA) today; Cloudflare Workers at the edge once server logic exists.
+- **Storage**: SQLite WASM (`sqlite-vec` for semantic search) + OPFS — target. The shipped
+  adapter is OPFS → localStorage → in-memory.
+- **Payments**: Sovereign Adapter (Flutterwave/Paystack) via Cloudflare Workers — target; no
+  payment code or Worker exists yet.
+- **Deployment**: Cloudflare Pages (project `sircollins-pwa`), artifact directory `dist/`,
+  deployed by `tools/deploy.py` (primary) or Wrangler (alternative).
 
 ## 5. Current State
 
-- **Version**: 0.0.1 (Core Architecture Live)
-- **Status**: Active Development.
-- **Immediate Goal**: Integrate Private AI Agent interaction layer and finalize
-  "Inspirations & Reflections" teaser module.
+- **Version**: 0.0.1 (core architecture live).
+- **Status**: Active development; production is a static Pages deployment behind the custom
+  domain.
+- **Live now**: strict TypeScript build, Liquid Glass shell, portrait, JSON-LD Person/WebSite/Blog,
+  OPFS/localStorage storage adapter, service worker, draft teaser cards.
+- **Immediate goal**: integrate the Private AI Agent interaction layer and replace the draft
+  teaser text with verbatim material from Sir Collins.
 
 ## 6. Contact & Channels
 

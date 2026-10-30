@@ -10,7 +10,7 @@
     />
     <meta name="theme-color" content="#05060f" />
     <meta name="color-scheme" content="dark" />
-    <link rel="canonical" href="https://sircollins.concept1.net/" />
+    <link rel="canonical" href="https://sircollins.coreconcept1.net/" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icons/mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icons/mark.svg" />
@@ -21,8 +21,15 @@
       property="og:description"
       content="Leadership consulting, ICT strategy, royal tutoring, and creative work. Local-first, machine-readable."
     />
-    <meta property="og:url" content="https://sircollins.concept1.net/" />
+    <meta property="og:url" content="https://sircollins.coreconcept1.net/" />
+    <meta property="og:image" content="https://sircollins.coreconcept1.net/brand/signature.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1020" />
+    <meta property="og:image:height" content="1280" />
+    <meta property="og:image:alt" content="Portrait of Sir Collins Chris" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://sircollins.coreconcept1.net/brand/signature.jpg" />
+    <meta name="twitter:image:alt" content="Portrait of Sir Collins Chris" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -52,13 +59,30 @@
       <p id="fatal" class="fatal" role="status" hidden></p>
 
       <section class="hero">
-        <p class="eyebrow">Sovereign Digital Twin</p>
-        <h1>Leadership, strategy, and craft — held in your own hands.</h1>
-        <p class="hero__lede">
-          An offline-first encyclopedia of the work: consulting, ICT strategy, tutelage, and creative
-          practice. Readable by people, parseable by machines, and owned by its principal.
-        </p>
-        <ul id="role-list" class="roles" aria-label="Roles"></ul>
+        <div class="hero__body">
+          <p class="eyebrow">Sovereign Digital Twin</p>
+          <h1>Leadership, strategy, and craft — held in your own hands.</h1>
+          <p class="hero__lede">
+            An offline-first encyclopedia of the work: consulting, ICT strategy, tutelage, and
+            creative practice. Readable by people, parseable by machines, and owned by its
+            principal.
+          </p>
+          <ul id="role-list" class="roles" aria-label="Roles"></ul>
+        </div>
+        <figure class="portrait">
+          <span class="portrait__frame">
+            <img
+              class="portrait__image"
+              src="/brand/signature.jpg"
+              alt="Portrait of Sir Collins Chris"
+              width="1020"
+              height="1280"
+              decoding="async"
+              fetchpriority="high"
+            />
+          </span>
+          <figcaption>Principal · Sovereign Digital Twin</figcaption>
+        </figure>
       </section>
 
       <section class="section" id="reflections" aria-labelledby="reflections-title">
@@ -86,7 +110,7 @@
 
     <footer class="site-footer">
       <div class="shell">
-        <p>© <span id="year">2026</span> Sir Collins Chris · sircollins.concept1.net</p>
+        <p>© <span id="year">2026</span> Sir Collins Chris · sircollins.coreconcept1.net</p>
       </div>
     </footer>
 

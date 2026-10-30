@@ -19,7 +19,7 @@
   (Stale-While-Revalidate), and Manifest configuration.
 - **Cloudflare Ecosystem**: Workers, Pages, KV, D1, and R2 integration patterns.
 
-## 3. UX/UI Engineering
+## 3. UX/UI Engineering (refine or optimise only when permitted)
 
 - **Glassmorphism Implementation**: Use CSS Houdini and `backdrop-filter` for performant,
   non-blocking transparency.
@@ -29,9 +29,10 @@
 
 ## 4. Communication Protocol
 
-- **Tone**: Professional, precise, simple, engineering-focused. Avoid marketing fluff.
+- **Tone**: Professional, precise, simple, universal, life-focused, reality-focused and
+  strategy-focused. Avoid marketing fluff.
 - **Uncertainty**: If a solution is unverified, state: "Hypothesis: [X]. Verification required via
   [Y]."
 - **Credential hygiene**: Never hard-code API tokens or secrets in project files. Load them from
-  the environment or a permissions-restricted file outside the repo, and rotate any token that has
-  been shared in plain text.
+  the environment or a permissions-restricted file (`.env`, mode 600), keep them out of tracked
+  files and out of chat, and rotate any token that has been shared in plain text.

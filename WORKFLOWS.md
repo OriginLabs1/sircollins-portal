@@ -2,47 +2,56 @@
 
 ## Workflow A: Feature Request & Implementation
 
-1. **Analyze**: Break down the user request against `CONTEXT.md` criteria (Robustness,
-   Sovereignty).
-2. **Plan**: Outline the file changes required (Frontend, Backend, Config).
-3. **Verify**: Check if dependencies exist in `TOOLS.md`.
+1. **Analyze**: Break down the request against `CONTEXT.md` criteria (Robustness, Sovereignty).
+2. **Plan**: Outline the file changes required (frontend, data, config).
+3. **Verify**: Check that every dependency is in `TOOLS.md` §1 *Installed*. Anything in §2
+   *Planned* needs an explicit decision before it is imported.
 4. **Execute**:
-   - Output **ONE** consolidated code block (using `cat > file << 'EOF'`).
-   - Include migration scripts if database schemas change.
-5. **Validate**: Simulate the command sequence (`git add`, `commit`, `deploy`).
-6. **Report**: Confirm success or list specific failure points.
+   - Apply the change as one consolidated patch, not a scatter of partial edits.
+   - Include migration scripts if a database schema changes.
+5. **Validate**: Run the real commands — `npm run lint`, `npm run test`, `npm run build` — and
+   report their output. Do not simulate a build when the build can be run.
+6. **Report**: Confirm success or list the exact failure point.
 
 ## Workflow B: Code Review & Optimization
 
 1. **Scan**: Review code for `any` types, blocking operations, or non-modular coupling.
 2. **Refactor**: Propose specific improvements (e.g. "Move this logic to a WASM module for
    performance").
-3. **Test**: Generate unit test stubs (Jest/Vitest) for critical paths.
+3. **Test**: Generate Vitest cases for critical paths (the suite runs with `npm run test`).
 4. **Commit**: Prepare a commit message following Conventional Commits (`feat:`, `fix:`,
    `refactor:`).
 
 ## Workflow C: Deployment Protocol
 
 1. **Pre-flight**:
-   - Verify `CLOUDFLARE_API_TOKEN` is set.
-   - Verify working directory is `~/sircollins-portal`.
-   - Run `npm run lint` and `npm run build`.
-2. **Deploy**:
-   - Execute `npx wrangler pages deploy src/frontend --project-name=sircollins-pwa`.
+   - `cd ~/projects/sircollins-portal`
+   - Confirm the token resolves (environment → `.env` → `~/.cloudflare-token`):
+     `python3 tools/deploy.py --verify`.
+   - Run `npm run lint`, `npm run test`, `npm run build`.
+   - Confirm the artifact is in `dist/`. There is no `src/frontend/`.
+2. **Deploy** (primary path, no Wrangler):
+   - `python3 tools/deploy.py --commit-message "..."`
+   - Alternative: `npx wrangler pages deploy dist --project-name=sircollins-pwa`
 3. **Post-deploy**:
-   - Verify `sircollins.concept1.net` resolves.
-   - Check Service Worker registration.
-   - Validate JSON-LD output via `curl` or browser dev tools.
+   - `curl -sI https://sircollins.coreconcept1.net/` → 200 plus the CSP, `X-Frame-Options`,
+     `Referrer-Policy` and `Permissions-Policy` headers.
+   - Compare every file in `dist/` with the live bytes (the Python deployer prints the
+     deployment id; use it for rollback if a check fails).
+   - `/sw.js` must return `Cache-Control: no-cache` (a scoped zone Cache Rule enforces this).
+   - Confirm the service worker registers and JSON-LD includes Person, WebSite and Blog, with
+     the portrait image on Person.
+   - Check the canonical URL and Open Graph URL are `https://sircollins.coreconcept1.net/`.
 
 ## Workflow D: "Inspirations & Reflections" Content Update
 
 1. **Input**: Receive raw text/media from Sir Collins.
 2. **Process**:
-   - Convert to structured JSON-LD.
-   - Compress to CBOR-LD for internal storage.
+   - Convert to structured JSON-LD (the Blog graph in `src/lib/schema.ts`).
+   - Compress to CBOR-LD for internal storage once the encoder exists; it does not exist yet.
    - Generate a visual teaser card (CSS/SVG).
-3. **Output**: Update `src/data/teasers.json` and trigger a hot-reload simulation.
-4. **Notify**: "Content ingested. Teaser active on sircollins.concept1.net."
+3. **Output**: Update `src/data/teasers.json`; the dev server hot-reloads.
+4. **Notify**: "Content ingested. Teaser active on sircollins.coreconcept1.net."
 
 ## Optional Emergency Protocol: "Build Again"
 
@@ -50,6 +59,6 @@ If a release fails any acceptance criterion:
 
 1. **HALT** deployment immediately.
 2. **Isolate** the failing component.
-3. **Revert** to the last known stable commit.
-4. **Diagnose** root cause (Logic, Syntax, or Architecture).
+3. **Revert** to the last known stable commit or Cloudflare deployment.
+4. **Diagnose** root cause (logic, syntax, or architecture).
 5. **Rebuild** with corrected logic before retrying.

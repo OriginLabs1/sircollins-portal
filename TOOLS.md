@@ -1,38 +1,58 @@
 # TOOLS: Available Libraries & Integrations
 
-## 1. Core Runtime
+Two lists, kept apart on purpose: what is **installed** and what is **planned**. A dependency
+named here without a version is not an invitation to assume it exists — check `package.json`.
 
-- `@cloudflare/workers-types`: Type definitions for Edge runtime.
-- `typescript`: Strict mode compiler (`tsc`).
-- `esbuild`: Fast bundler for TypeScript → ES Modules.
+## 1. Installed
 
-## 2. Data & Storage
+### Runtime and build
 
-- `sql.js` / `sqlite-wasm`: In-browser SQLite engine.
-- `sqlite-vec`: Vector extension for semantic search within SQLite.
-- `opfs-tools`: Abstraction layer for Origin Private File System.
-- `cbor`: Library for Constrained Binary Object Representation (M2M efficiency).
+- `typescript` 5.6 — strict compiler; `npm run lint` is `tsc --noEmit`.
+- `vite` 5.4 — dev server and production bundle into `dist/`.
+- `vitest` 2.1 — unit tests (`npm run test`).
+- No runtime dependencies. The browser bundle is plain TypeScript + CSS.
+- Node.js + npm; `npx wrangler` is available for the alternative deploy path.
 
-## 3. UI & Interaction
+### Hosting, deployment, tooling
 
-- `framer-motion` (or vanilla CSS Houdini): For spring-physics animations.
-- `lucide-icons`: Lightweight, SVG-based iconography.
-- `google-fonts`: 'Google Sans' (via Inter fallback) and 'JetBrains Mono'.
+- **Cloudflare Pages** — project `sircollins-pwa`, custom domain
+  `sircollins.coreconcept1.net`.
+- `tools/deploy.py` — stdlib-only Pages deployer (primary path).
+- `tools/blake3.py` — pure-Python BLAKE3, required for Pages asset keys.
+- `git` — conventional commits.
+- Python 3.13 standard library (`urllib`, `sqlite3`, `struct`) — no pip packages.
+- Shell: standard POSIX (`bash`).
+- Fonts: Google Fonts CDN (`Inter`, `JetBrains Mono`), allowed by the CSP; `Google Sans` is used
+  only if the visitor already has it.
 
-## 4. External Services (Sovereign Adapter)
+### Browser platform
 
-- **Paystack API**: For African market transactions.
-- **Flutterwave API**: Global payment routing.
-- **Cloudflare Workers**: Serverless logic for payment routing and CBOR-LD transformation.
+- Service Worker + Cache API, OPFS, `localStorage`, Canvas 2D, `backdrop-filter`, CSS
+  `clip-path`, `prefers-reduced-motion`, `prefers-contrast`.
 
-## 5. Deployment & CI/CD
+## 2. Planned (not installed — do not import yet)
 
-- `wrangler`: CLI for Cloudflare Pages/Workers deployment.
-- `git`: Version control with conventional commits.
-- **Terminal**: Standard POSIX-compliant shell (bash/zsh/fish) for command execution.
+- `sql.js` / `sqlite-wasm` + `sqlite-vec` — SQLite in the browser and vector search.
+- `opfs-tools` — OPFS helpers; the current adapter uses the raw API.
+- `cbor` / a CBOR-LD encoder — internal machine-to-machine representation.
+- `motion.dev` — preferred spring-physics library **if** CSS transitions stop being enough.
+  Today all motion is CSS cubic-beziers; no animation runtime is shipped.
+- `lucide` — SVG icon set, if the inline icon needs grow.
+- Rive CLI — optional, for authored vector motion.
+- Paystack / Flutterwave adapters and the Cloudflare Worker that routes them.
 
-## 6. AI Agent Specific Tools
+## 3. Environment Constraints
 
-- `web_search`: For verifying current tech trends or API docs.
-- `file_read/write`: To modify project files directly.
-- `code_execution`: To simulate builds or test snippets locally.
+- No ImageMagick, Pillow, `cwebp` or `oxipng` in this environment. Image dimensions and
+  composition are inspected with the browser's Canvas API; do not assume a CLI converter exists.
+- Cloudflare zone settings are shared with other subdomains (`brimenergy`, `pioneer`, `reality`,
+  `prime`). Never change zone-wide cache, TLS or email settings to fix one host; use a scoped
+  Rule instead.
+- Deployment-specific `*.sircollins-pwa.pages.dev` hostnames may fail TLS from this network;
+  verify through the custom domain.
+
+## 4. AI Agent Specific Tools
+
+- `web_search`: verify current tech trends or API docs.
+- `file_read/write`: modify project files directly.
+- `code_execution`: run builds, tests and deployment checks locally.
