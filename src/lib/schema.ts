@@ -99,6 +99,8 @@ export interface PersonGraph {
   jobTitle: readonly string[];
   email: string;
   sameAs: readonly string[];
+  /** Skills declared in the interface, mirrored into the graph at boot. */
+  knowsAbout?: readonly string[];
 }
 
 export interface WebSiteGraph {
@@ -144,7 +146,7 @@ export function entryUrl(id: string): string {
   return `${SITE_ORIGIN}/#entry-${id}`;
 }
 
-export function buildPersonGraph(): PersonGraph {
+export function buildPersonGraph(knowsAbout: readonly string[] = []): PersonGraph {
   return {
     '@context': 'https://schema.org',
     '@type': 'Person',
@@ -154,6 +156,7 @@ export function buildPersonGraph(): PersonGraph {
     jobTitle: ROLES,
     email: CONTACT.professionalEmail,
     sameAs: [CONTACT.telegram],
+    ...(knowsAbout.length > 0 ? { knowsAbout } : {}),
   };
 }
 

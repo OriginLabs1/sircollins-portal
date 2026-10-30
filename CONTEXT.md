@@ -51,10 +51,13 @@ Every line of code, design decision, and feature must satisfy these criteria:
 - **Status**: Active development; production is a static Pages deployment behind the custom
   domain.
 - **Live now**: strict TypeScript build; Liquid Glass shell led by the emblem; JSON-LD
-  Person/WebSite/CollectionPage; OPFS/localStorage storage adapter; service worker; the
-  verbatim **Inspirations** (2) and **Reflections** (3) modules; Love, Acknowledge, Share per
-  entry; “Acknowledged by”; responder form with name, X, Facebook and a why/where note;
-  carrier links; Token/Giving Mode; qualitative rarity symbols.
+  Person/WebSite/CollectionPage (with `knowsAbout` read from the interface); OPFS/localStorage
+  storage adapter; service worker; **Unique Skills** (10 capabilities) with **Creative
+  Expressions** links; **Unique Concepts** (Ceremoni, Royal Discipleship, Super Birthdays);
+  the TEDx Jalingo stage feature; the verbatim **Inspirations** (2) and **Reflections** (3);
+  Love, Acknowledge, Share per entry; “Acknowledged by”; responder form with name, X,
+  Facebook and a why/where note; carrier links; Token/Giving Mode; qualitative rarity symbols;
+  both contact addresses visible in the interface.
 - **Interaction model**: [see §7](#7-interaction-model).
 
 ## 6. Contact & Channels
@@ -67,6 +70,9 @@ Every line of code, design decision, and feature must satisfy these criteria:
 
 ## 7. Interaction Model
 
+- **Reading order**: Unique Skills → Creative Expressions → Unique Concepts → From the Stage
+  → Token/Giving Mode → Inspirations → Reflections → Respond. Token/Giving Mode is never the
+  first feature under “Enter the portal”; capability and verifiable origins lead.
 - **Token/Giving Mode** is the user-facing name of the openness state (internally the
   `receptive` flag, kept for stored-state compatibility). The exact openness copy is
   rendered verbatim and is not paraphrased.

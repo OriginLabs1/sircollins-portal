@@ -75,6 +75,18 @@ const BODIES = {
   lock:
     '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
   'chevron-down': '<path d="M6 9l6 6 6-6"/>',
+  code:
+    '<path d="M8.5 7.5L4 12l4.5 4.5"/><path d="M15.5 7.5L20 12l-4.5 4.5"/><path d="M13.4 4.5l-2.8 15"/>',
+  film:
+    '<rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M7 4.5v15M17 4.5v15M2.5 9.5h4.5M17 9.5h4.5M2.5 14.5h4.5M17 14.5h4.5"/>',
+  music:
+    '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+  palette:
+    '<path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-.9 2-1.9 0-1.4-1.2-1.8-1.2-2.9 0-.9.7-1.5 1.7-1.5H16a5 5 0 0 0 5-5c0-3.9-4-6.7-9-6.7z"/><circle cx="7.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="6.8" r="1.1" fill="currentColor" stroke="none"/><circle cx="14.5" cy="6.8" r="1.1" fill="currentColor" stroke="none"/>',
+  play:
+    '<circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5v-7z" fill="currentColor" stroke="none"/>',
+  mic:
+    '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3M9 21h6"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
 } as const;
 

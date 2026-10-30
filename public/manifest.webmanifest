@@ -29,6 +29,10 @@
   ],
   "shortcuts": [
     {
+      "name": "Unique Skills",
+      "url": "/#skills"
+    },
+    {
       "name": "Inspirations & Reflections",
       "url": "/#reflections"
     },

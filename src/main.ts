@@ -111,9 +111,15 @@ function readEntries(): readonly Entry[] {
   return entries;
 }
 
-function writeJsonLd(entries: readonly Entry[]): void {
+function readSkills(): readonly string[] {
+  return [...document.querySelectorAll<HTMLElement>('.skill__title')]
+    .map((node) => node.textContent?.trim() ?? '')
+    .filter((name) => name.length > 0);
+}
+
+function writeJsonLd(entries: readonly Entry[], skills: readonly string[]): void {
   const graphs: readonly unknown[] = [
-    buildPersonGraph(),
+    buildPersonGraph(skills),
     buildWebSiteGraph(),
     buildCollectionGraph(entries),
   ];
@@ -672,6 +678,8 @@ function renderRoles(): void {
 function renderContacts(): void {
   const email = query<HTMLAnchorElement>('#contact-email');
   email.href = `mailto:${CONTACT.professionalEmail}`;
+  const personal = query<HTMLAnchorElement>('#contact-personal');
+  personal.href = `mailto:${CONTACT.personalEmail}`;
   const telegram = query<HTMLAnchorElement>('#contact-telegram');
   telegram.href = CONTACT.telegram;
 }
@@ -1051,7 +1059,7 @@ async function boot(): Promise<void> {
   renderContacts();
   renderRarityLegend();
   renderYear();
-  writeJsonLd(entries);
+  writeJsonLd(entries, readSkills());
   renderEntries(entries);
 
   store = await createSovereignStore();

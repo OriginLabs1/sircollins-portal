@@ -9,7 +9,7 @@
  *
  * Bump CACHE_VERSION on every deploy that changes the shell.
  */
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const SHELL_CACHE = `sircollins-shell-${CACHE_VERSION}`;
 const SHELL_ASSETS = [
   '/',
@@ -17,6 +17,7 @@ const SHELL_ASSETS = [
   '/manifest.webmanifest',
   '/icons/mark.svg',
   '/brand/logo.png',
+  '/media/tedx-jalingo.jpg',
 ];
 
 self.addEventListener('install', (event) => {

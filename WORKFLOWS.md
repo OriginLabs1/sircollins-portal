@@ -60,7 +60,22 @@
 4. **Notify**: "Content ingested. Inspirations and Reflections are live on
    sircollins.coreconcept1.net."
 
-## Workflow E: Acknowledgment & Rarity Review
+## Workflow E: Capability, Concept & Stage Content
+
+1. **Skills**: the ten capability tiles and their one-line descriptions live in `index.html`
+   (§ Unique Skills). `Person.knowsAbout` is read from those titles at boot, so renaming a
+   skill updates the JSON-LD without a second edit.
+2. **Creative Expressions**: external links open in a new tab with `rel="noopener noreferrer"`.
+   Do not inline third-party players; the CSP stays `default-src 'self'`.
+3. **Concepts**: keep Sir Collins's claims and dates as given (“a few years ago” is
+   intentional; do not invent a year). “Reality hint” is a label; the copy beneath it is his.
+4. **Stage image**: `public/media/tedx-jalingo.jpg` is served as supplied at 1080×856. Every
+   image needs real `width`/`height`, `loading="lazy"` below the fold, and alt text that
+   carries the slide's quote. Add new media to `SHELL_ASSETS` and bump `CACHE_VERSION`.
+5. **Contact**: both `access1@tutamail.com` and `sircollins1@protonmail.com` remain visible in
+   the contact panel and the personal address in the footer.
+
+## Workflow F: Acknowledgment & Rarity Review
 
 1. **Privacy first**: acknowledgments live only on the device that created them. Never add
    silent upload, analytics on names, or a server-side tally without an explicit decision.
