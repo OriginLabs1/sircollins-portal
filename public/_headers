@@ -1,5 +1,8 @@
 # Security + caching headers for Cloudflare Pages.
 # Keep the CSP in sync with any new third-party origin (fonts, payment widgets).
+# Cloudflare Web Analytics is injected at the edge on real navigations; the
+# cloudflareinsights origins allow exactly that beacon. Remove both if the
+# zone's analytics is turned off.
 # One line per header value; Cloudflare joins duplicates.
 
 /*
@@ -7,7 +10,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
   Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(self)
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; object-src 'none'; upgrade-insecure-requests
 
 /sw.js
   Cache-Control: no-cache

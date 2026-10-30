@@ -113,6 +113,6 @@ the only path that needs no token at all — it needs one browser click instead.
 
 ## Security note
 
-A Cloudflare API token was shared in plain text during setup. It was **not** written into
-the repository, and `.gitignore` blocks `.env`, `.dev.vars` and `.cloudflare-token`. Rotate
-that token before deploying.
+A Cloudflare API token was shared in plain text during setup. It was **not** written into the
+repository, and `.gitignore` blocks `.env`, `.dev.vars` and `.cloudflare-token`. Rotation is
+recommended; after rotating, run `python3 tools/deploy.py --verify` before the next deploy.
