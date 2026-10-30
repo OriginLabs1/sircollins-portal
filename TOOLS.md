@@ -11,6 +11,9 @@ named here without a version is not an invitation to assume it exists — check 
 - `vite` 5.4 — dev server and production bundle into `dist/`.
 - `vitest` 2.1 — unit tests (`npm run test`).
 - No runtime dependencies. The browser bundle is plain TypeScript + CSS.
+- `src/vendor/qrcodegen.ts` — Project Nayuki's MIT-licensed QR encoder, vendored unmodified
+  (`@ts-nocheck` for the strict-index rules only). It keeps QR generation on-device and
+  offline; regenerate the code with Canvas, never with a remote image service.
 - Node.js + npm; `npx wrangler` is available for the alternative deploy path.
 
 ### Hosting, deployment, tooling

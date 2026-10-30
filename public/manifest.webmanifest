@@ -1,7 +1,7 @@
 {
-  "name": "Sir Collins Portal — Sovereign Digital Twin",
+  "name": "Sir Collins — The Living Portal",
   "short_name": "Sir Collins",
-  "description": "Offline-first, machine-readable encyclopedia of leadership, ICT strategy, and creative practice.",
+  "description": "The living portal of the Life and unique realities of Sir Collins — featured inspirations, reflections, acknowledgment, and a community of witness.",
   "id": "/",
   "start_url": "/",
   "scope": "/",
@@ -12,7 +12,7 @@
   "theme_color": "#05060f",
   "lang": "en",
   "dir": "ltr",
-  "categories": ["education", "business", "productivity"],
+  "categories": ["education", "lifestyle", "books"],
   "icons": [
     {
       "src": "/icons/mark.svg",
@@ -31,6 +31,10 @@
     {
       "name": "Inspirations & Reflections",
       "url": "/#reflections"
+    },
+    {
+      "name": "Respond",
+      "url": "/#respond"
     },
     {
       "name": "Contact",

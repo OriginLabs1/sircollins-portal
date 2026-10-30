@@ -9,14 +9,14 @@
  *
  * Bump CACHE_VERSION on every deploy that changes the shell.
  */
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const SHELL_CACHE = `sircollins-shell-${CACHE_VERSION}`;
 const SHELL_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
   '/icons/mark.svg',
-  '/brand/signature.jpg',
+  '/brand/logo.png',
 ];
 
 self.addEventListener('install', (event) => {

@@ -39,19 +39,40 @@
    - Compare every file in `dist/` with the live bytes (the Python deployer prints the
      deployment id; use it for rollback if a check fails).
    - `/sw.js` must return `Cache-Control: no-cache` (a scoped zone Cache Rule enforces this).
-   - Confirm the service worker registers and JSON-LD includes Person, WebSite and Blog, with
-     the portrait image on Person.
+   - Confirm the service worker registers and JSON-LD includes Person, WebSite and
+     CollectionPage (Quotation/Question parts). `Person.image` is intentionally absent; the
+     emblem is referenced through Open Graph and the manifest instead.
    - Check the canonical URL and Open Graph URL are `https://sircollins.coreconcept1.net/`.
 
 ## Workflow D: "Inspirations & Reflections" Content Update
 
 1. **Input**: Receive raw text/media from Sir Collins.
 2. **Process**:
-   - Convert to structured JSON-LD (the Blog graph in `src/lib/schema.ts`).
+   - Place the text **verbatim** in `src/data/entries.json`; never paraphrase, and preserve
+     the author's wording (including “been GOOD or been RIGHT”).
+   - `kind` is `inspiration` or `reflection`; `weight` is the 0–5 curation floor that seeds
+     the rarity scale.
+   - JSON-LD is derived automatically: `buildCollectionGraph()` maps inspirations to
+     `Quotation` and reflections to `Question`. Do not hand-write the graph.
    - Compress to CBOR-LD for internal storage once the encoder exists; it does not exist yet.
-   - Generate a visual teaser card (CSS/SVG).
-3. **Output**: Update `src/data/teasers.json`; the dev server hot-reloads.
-4. **Notify**: "Content ingested. Teaser active on sircollins.coreconcept1.net."
+3. **Output**: Update `src/data/entries.json`; the dev server hot-reloads. Bump
+   `CACHE_VERSION` in `public/sw.js` before deploying.
+4. **Notify**: "Content ingested. Inspirations and Reflections are live on
+   sircollins.coreconcept1.net."
+
+## Workflow E: Acknowledgment & Rarity Review
+
+1. **Privacy first**: acknowledgments live only on the device that created them. Never add
+   silent upload, analytics on names, or a server-side tally without an explicit decision.
+2. **Carrier links**: `#ack=<payload>` is validated by `decodeAck()` against the current entry
+   ids. Adding an entry means it becomes a valid carrier target; removing one invalidates the
+   old links (they fail closed).
+3. **Roles**: changes to `ACK_ROLES` must also update `ACK_ROLE_LABEL`, `ACK_ROLE_DESCRIPTION`,
+   `ACK_ROLE_ICON`, `ACK_WEIGHT`, and both role fieldsets in `index.html`.
+4. **Rarity**: curation sets the floor, acknowledgment raises it. Membership must never weigh
+   more than action. Keep the breakdown honest — every point must be attributable.
+5. **Verify**: `npm run test` covers payload round-trips, role weights, tier boundaries and
+   corrupt-state recovery.
 
 ## Optional Emergency Protocol: "Build Again"
 

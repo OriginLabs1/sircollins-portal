@@ -1,19 +1,58 @@
 import './styles/base.css';
 import './styles/glass.css';
-import teaserData from './data/teasers.json';
+import entryData from './data/entries.json';
 import { createSovereignStore } from './lib/storage.ts';
-import type { StorageEngine } from './lib/storage.ts';
+import type { SovereignStore, StorageEngine } from './lib/storage.ts';
+import { hydrateIcons, iconNode } from './lib/icons.ts';
+import type { IconName } from './lib/icons.ts';
 import {
+  ACK_ROLE_DESCRIPTION,
+  ACK_ROLE_ICON,
+  ACK_ROLE_LABEL,
+  ACK_ROLES,
   CONTACT,
   ROLES,
   SITE_NAME,
-  buildBlogGraph,
+  SITE_ORIGIN,
+  SITE_TAGLINE,
+  buildCollectionGraph,
   buildPersonGraph,
   buildWebSiteGraph,
 } from './lib/schema.ts';
-import type { Teaser } from './lib/schema.ts';
+import type { AckRole, Entry, EntryKind } from './lib/schema.ts';
+import {
+  RARITY_SCALE_NOTE,
+  RARITY_TIERS,
+  acknowledgmentsFor,
+  ackLink,
+  ackToPayload,
+  addAcknowledgment,
+  computeRarity,
+  createAckPayload,
+  decodeAck,
+  emptyState,
+  generalResponses,
+  parseSocialUrl,
+  parseState,
+  payloadToAck,
+  rarityBreakdown,
+  roleLabel,
+  setReceptive,
+  toggleLove,
+} from './lib/portal.ts';
+import type {
+  AckPayload,
+  Acknowledgment,
+  PortalState,
+  Rarity,
+  SocialNetwork,
+} from './lib/portal.ts';
+import { downloadCanvas, paintQr } from './lib/qr.ts';
 
-const TEASERS_KEY = 'teasers';
+const STATE_KEY = 'portal-state';
+const LEGACY_TEASERS_KEY = 'teasers';
+
+const ROLE_ICONS: readonly IconName[] = ['compass', 'route', 'book', 'cpu', 'sparkles'];
 
 function query<T extends Element>(selector: string): T {
   const node = document.querySelector<T>(selector);
@@ -21,30 +60,62 @@ function query<T extends Element>(selector: string): T {
   return node;
 }
 
-function readTeasers(): readonly Teaser[] {
-  const raw: unknown = teaserData;
-  if (typeof raw !== 'object' || raw === null || !('items' in raw)) return [];
-  const { items } = raw as { items: unknown };
-  if (!Array.isArray(items)) return [];
-  return items.filter((item): item is Teaser => {
-    const candidate = item as Partial<Teaser>;
-    return (
-      typeof candidate.id === 'string' &&
-      typeof candidate.title === 'string' &&
-      typeof candidate.summary === 'string' &&
-      typeof candidate.theme === 'string' &&
-      typeof candidate.publishedAt === 'string' &&
-      Array.isArray(candidate.tags)
-    );
-  });
+function element<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  className?: string,
+  text?: string,
+): HTMLElementTagNameMap[K] {
+  const node = document.createElement(tag);
+  if (className !== undefined) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
 }
 
-function writeJsonLd(): void {
-  const teasers = readTeasers();
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function readEntries(): readonly Entry[] {
+  const raw: unknown = entryData;
+  if (!isRecord(raw) || !Array.isArray(raw['items'])) return [];
+
+  const entries: Entry[] = [];
+  for (const item of raw['items']) {
+    if (!isRecord(item)) continue;
+    const id = item['id'];
+    const kind = item['kind'];
+    const theme = item['theme'];
+    const text = item['text'];
+    const weight = item['weight'];
+    const attribution = item['attribution'];
+    if (
+      typeof id !== 'string'
+      || !/^[a-z0-9-]{2,80}$/.test(id)
+      || (kind !== 'inspiration' && kind !== 'reflection')
+      || typeof theme !== 'string'
+      || typeof text !== 'string'
+      || typeof weight !== 'number'
+      || !Number.isFinite(weight)
+    ) {
+      continue;
+    }
+    entries.push({
+      id,
+      kind: kind as EntryKind,
+      theme,
+      text,
+      weight,
+      ...(typeof attribution === 'string' ? { attribution } : {}),
+    });
+  }
+  return entries;
+}
+
+function writeJsonLd(entries: readonly Entry[]): void {
   const graphs: readonly unknown[] = [
     buildPersonGraph(),
     buildWebSiteGraph(),
-    buildBlogGraph(teasers),
+    buildCollectionGraph(entries),
   ];
   for (const graph of graphs) {
     const script = document.createElement('script');
@@ -55,85 +126,577 @@ function writeJsonLd(): void {
 }
 
 function formatDate(iso: string): string {
-  const date = new Date(`${iso}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return iso;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
   return new Intl.DateTimeFormat('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
-    timeZone: 'UTC',
   }).format(date);
 }
 
-function renderTeasers(teasers: readonly Teaser[]): void {
-  const grid = query<HTMLDivElement>('#teaser-grid');
-  const fragment = document.createDocumentFragment();
+function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-GB', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date);
+}
 
-  for (const teaser of teasers) {
-    const article = document.createElement('article');
-    article.className = 'teaser glass';
-    article.dataset['theme'] = teaser.theme;
+function shareOrigin(): string {
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return SITE_ORIGIN;
+  return window.location.origin;
+}
 
-    const theme = document.createElement('p');
-    theme.className = 'teaser__theme';
-    theme.textContent = teaser.theme;
+function entryShareUrl(id: string): string {
+  return `${shareOrigin()}/#entry-${id}`;
+}
 
-    const title = document.createElement('h3');
-    title.className = 'teaser__title';
-    title.textContent = teaser.title;
+function toast(message: string): void {
+  const node = query<HTMLDivElement>('#toast');
+  query<HTMLSpanElement>('#toast-text').textContent = message;
+  node.classList.add('is-visible');
+  if (toastTimer !== null) window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => {
+    node.classList.remove('is-visible');
+    toastTimer = null;
+  }, 3_200);
+}
 
-    const summary = document.createElement('p');
-    summary.className = 'teaser__summary';
-    summary.textContent = teaser.summary;
+let toastTimer: number | null = null;
 
-    const footer = document.createElement('footer');
-    footer.className = 'teaser__footer';
-
-    const time = document.createElement('time');
-    time.dateTime = teaser.publishedAt;
-    time.textContent = formatDate(teaser.publishedAt);
-
-    const tags = document.createElement('ul');
-    tags.className = 'teaser__tags';
-    for (const tag of teaser.tags) {
-      const item = document.createElement('li');
-      item.textContent = tag;
-      tags.append(item);
+async function copyText(value: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    const area = document.createElement('textarea');
+    area.value = value;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.inset = '0 auto auto -9999px';
+    document.body.append(area);
+    area.select();
+    let copied = false;
+    try {
+      copied = document.execCommand('copy');
+    } catch {
+      copied = false;
     }
+    area.remove();
+    return copied;
+  }
+}
 
-    footer.append(time, tags);
-    article.append(theme, title, summary, footer);
-    fragment.append(article);
+/* ------------------------------------------------------------------ state */
+
+let store: SovereignStore | null = null;
+let state: PortalState = emptyState();
+let saveChain: Promise<void> = Promise.resolve();
+const views = new Map<string, EntryView>();
+
+function commit(next: PortalState): Promise<void> {
+  state = next;
+  refreshAll();
+  saveChain = saveChain
+    .then(() => {
+      if (store === null) return;
+      return store.set(STATE_KEY, state);
+    })
+    .catch(() => {
+      toast('This device could not save the change.');
+    });
+  return saveChain;
+}
+
+/* ------------------------------------------------------------------ icons */
+
+function actionButton(className: string, name: IconName, label: string): HTMLButtonElement {
+  const button = element('button', className);
+  button.type = 'button';
+  button.append(iconNode(name), element('span', 'action__label', label));
+  return button;
+}
+
+/* ------------------------------------------------------------------ rarity */
+
+interface RarityView {
+  readonly wrap: HTMLDivElement;
+  readonly trigger: HTMLButtonElement;
+  readonly iconHost: HTMLSpanElement;
+  readonly label: HTMLSpanElement;
+  readonly panel: HTMLDivElement;
+}
+
+function createRarityView(entryId: string): RarityView {
+  const wrap = element('div', 'rarity');
+  const trigger = element('button', 'rarity__trigger');
+  trigger.type = 'button';
+  const panel = element('div', 'rarity__panel');
+  panel.id = `rarity-${entryId}`;
+  panel.setAttribute('role', 'tooltip');
+  trigger.setAttribute('aria-describedby', panel.id);
+  trigger.setAttribute('aria-expanded', 'false');
+
+  const iconHost = element('span', 'rarity__icon');
+  const label = element('span', 'rarity__label');
+  trigger.append(iconHost, label);
+  wrap.append(trigger, panel);
+
+  trigger.addEventListener('click', (event) => {
+    event.stopPropagation();
+    const open = wrap.classList.toggle('is-open');
+    trigger.setAttribute('aria-expanded', String(open));
+  });
+
+  return { wrap, trigger, iconHost, label, panel };
+}
+
+function updateRarity(view: RarityView, rarity: Rarity): void {
+  view.wrap.dataset['tier'] = rarity.tier.id;
+  view.iconHost.replaceChildren(iconNode(rarity.tier.icon as IconName));
+  view.label.textContent = rarity.tier.label;
+  view.trigger.setAttribute(
+    'aria-label',
+    `Rarity: ${rarity.tier.label}. Show the witness breakdown.`,
+  );
+
+  const title = element('p', 'rarity__panel-title', 'Witness breakdown');
+  const list = element('dl', 'rarity__rows');
+  for (const row of rarityBreakdown(rarity)) {
+    list.append(element('dt', undefined, row.label), element('dd', undefined, row.value));
   }
 
-  grid.replaceChildren(fragment);
+  const total = element('p', 'rarity__total');
+  total.append(element('span', undefined, 'Witness score'), element('strong', undefined, String(rarity.score)));
+
+  const note = element('p', 'rarity__note', RARITY_SCALE_NOTE);
+  view.panel.replaceChildren(title, list, total, note);
+}
+
+/* ------------------------------------------------------------------ people */
+
+function acknowledgmentItem(ack: Acknowledgment, withLink = false): HTMLLIElement {
+  const item = element('li', 'acknowledger');
+
+  const avatar = element('span', 'acknowledger__avatar', ack.name.slice(0, 1).toUpperCase());
+  avatar.setAttribute('aria-hidden', 'true');
+
+  const body = element('div', 'acknowledger__body');
+  const top = element('div', 'acknowledger__top');
+  const name = element('span', 'acknowledger__name', ack.name);
+
+  const role = element('span', `role-chip role-chip--${ack.role}`);
+  role.append(iconNode(ACK_ROLE_ICON[ack.role], 'icon role-chip__icon'), element('span', undefined, ACK_ROLE_LABEL[ack.role]));
+
+  const time = element('time', 'acknowledger__time', formatDate(ack.at));
+  time.dateTime = ack.at;
+  time.title = formatDateTime(ack.at);
+
+  top.append(name, role, time);
+
+  if (ack.note !== undefined) {
+    body.append(top, element('p', 'acknowledger__note', `“${ack.note}”`));
+  } else {
+    body.append(top);
+  }
+
+  const links = element('div', 'acknowledger__links');
+  if (ack.x !== undefined) {
+    const anchor = element('a', 'icon-link');
+    anchor.href = ack.x;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer me';
+    anchor.setAttribute('aria-label', `${ack.name} on X`);
+    anchor.append(iconNode('x-social', 'icon icon--brand'));
+    links.append(anchor);
+  }
+  if (ack.facebook !== undefined) {
+    const anchor = element('a', 'icon-link');
+    anchor.href = ack.facebook;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer me';
+    anchor.setAttribute('aria-label', `${ack.name} on Facebook`);
+    anchor.append(iconNode('facebook', 'icon icon--brand'));
+    links.append(anchor);
+  }
+  if (withLink) {
+    const copy = element('button', 'icon-link');
+    copy.type = 'button';
+    copy.setAttribute('aria-label', `Copy ${ack.name}'s carrier link`);
+    copy.append(iconNode('link'));
+    copy.addEventListener('click', () => {
+      void copyText(ackLink(shareOrigin(), ackToPayload(ack))).then((copied) => {
+        toast(copied ? 'Carrier link copied.' : 'Could not copy the link.');
+      });
+    });
+    links.append(copy);
+  }
+  if (links.childElementCount > 0) body.append(links);
+
+  item.append(avatar, body);
+  return item;
+}
+
+/* ------------------------------------------------------------------- cards */
+
+interface EntryView {
+  readonly entry: Entry;
+  readonly article: HTMLElement;
+  readonly love: HTMLButtonElement;
+  readonly rarity: RarityView;
+  readonly acknowledgers: HTMLDivElement;
+  readonly acknowledgerList: HTMLUListElement;
+}
+
+function buildEntryCard(entry: Entry, index: number): EntryView {
+  const article = element('article', 'entry glass');
+  article.id = `entry-${entry.id}`;
+  article.dataset['kind'] = entry.kind;
+  article.style.setProperty('--index', String(index));
+
+  const head = element('header', 'entry__head');
+  const theme = element('p', 'entry__theme');
+  theme.append(
+    iconNode(entry.kind === 'inspiration' ? 'spark' : 'question', 'icon entry__theme-icon'),
+    element('span', undefined, entry.theme),
+  );
+  const rarity = createRarityView(entry.id);
+  head.append(theme, rarity.wrap);
+
+  const quote = element('blockquote', 'entry__quote');
+  const text = element('p', 'entry__text', entry.text);
+  quote.append(iconNode('quote', 'icon entry__mark'), text);
+
+  const actions = element('div', 'entry__actions');
+  const love = actionButton('action action--love', 'heart', 'Love');
+  love.setAttribute('aria-pressed', 'false');
+  love.addEventListener('click', () => {
+    const active = !state.loved.includes(entry.id);
+    void commit(toggleLove(state, entry.id));
+    if (active) {
+      love.classList.remove('is-bursting');
+      // Restart the ring without forcing a reflow of the card.
+      void love.offsetWidth;
+      love.classList.add('is-bursting');
+      navigator.vibrate?.(8);
+    }
+  });
+  love.addEventListener('animationend', () => love.classList.remove('is-bursting'));
+
+  const acknowledge = actionButton('action action--ack', 'seal', 'Acknowledge');
+  acknowledge.addEventListener('click', () => openAckDialog(entry));
+
+  const share = actionButton('action action--share', 'share', 'Share');
+  share.addEventListener('click', () => {
+    openShare({
+      title: `Share · ${entry.theme}`,
+      text: entry.text.replace(/\n/g, ' '),
+      url: entryShareUrl(entry.id),
+      qr: true,
+    });
+  });
+
+  actions.append(love, acknowledge, share);
+
+  const acknowledgers = element('div', 'acknowledgers');
+  acknowledgers.hidden = true;
+  const label = element('p', 'acknowledgers__label');
+  label.append(iconNode('seal', 'icon'), element('span', undefined, 'Acknowledged by'));
+  const acknowledgerList = element('ul', 'acknowledgers__list');
+  acknowledgers.append(label, acknowledgerList);
+
+  article.append(head, quote);
+  if (entry.attribution !== undefined) {
+    article.append(element('p', 'entry__attribution', `— ${entry.attribution}`));
+  }
+  article.append(actions, acknowledgers);
+
+  return { entry, article, love, rarity, acknowledgers, acknowledgerList };
+}
+
+function refreshCard(view: EntryView): void {
+  const loved = state.loved.includes(view.entry.id);
+  view.love.setAttribute('aria-pressed', String(loved));
+  view.love.classList.toggle('is-loved', loved);
+  const label = view.love.querySelector<HTMLSpanElement>('.action__label');
+  if (label !== null) label.textContent = loved ? 'Loved' : 'Love';
+
+  updateRarity(view.rarity, computeRarity(view.entry, state.acknowledgments));
+
+  const acknowledgments = acknowledgmentsFor(state, view.entry.id);
+  view.acknowledgers.hidden = acknowledgments.length === 0;
+  view.acknowledgerList.replaceChildren(...acknowledgments.map((ack) => acknowledgmentItem(ack)));
+}
+
+function renderEntries(entries: readonly Entry[]): void {
+  const inspirationGrid = query<HTMLDivElement>('#inspiration-grid');
+  const reflectionGrid = query<HTMLDivElement>('#reflection-grid');
+  const inspirationFragment = document.createDocumentFragment();
+  const reflectionFragment = document.createDocumentFragment();
+
+  entries.forEach((entry, index) => {
+    const view = buildEntryCard(entry, index);
+    views.set(entry.id, view);
+    if (entry.kind === 'inspiration') inspirationFragment.append(view.article);
+    else reflectionFragment.append(view.article);
+  });
+
+  inspirationGrid.replaceChildren(inspirationFragment);
+  reflectionGrid.replaceChildren(reflectionFragment);
+}
+
+function refreshAll(): void {
+  for (const view of views.values()) refreshCard(view);
+  renderVoices();
+  applyReceptive();
+}
+
+/* ------------------------------------------------------------------ voices */
+
+function renderVoices(): void {
+  const voices = query<HTMLDivElement>('#voices');
+  const list = query<HTMLUListElement>('#voices-list');
+  const responses = generalResponses(state);
+  voices.hidden = responses.length === 0;
+  list.replaceChildren(...responses.map((ack) => acknowledgmentItem(ack, true)));
+}
+
+/* ------------------------------------------------------------------ dialog */
+
+const dialog = query<HTMLDialogElement>('#ack-dialog');
+const ackForm = query<HTMLFormElement>('#ack-form');
+const ackFormView = query<HTMLDivElement>('#ack-form-view');
+const ackSuccess = query<HTMLDivElement>('#ack-success');
+let activeEntry: Entry | null = null;
+let activePayload: AckPayload | null = null;
+
+interface Identity {
+  readonly name: string;
+  readonly role: AckRole;
+  readonly x: string;
+  readonly facebook: string;
+}
+
+let lastIdentity: Identity | null = null;
+
+function socialInputs(prefix: 'ack' | 'respond'): {
+  readonly x: HTMLInputElement;
+  readonly facebook: HTMLInputElement;
+  readonly note: HTMLTextAreaElement;
+  readonly name: HTMLInputElement;
+} {
+  return {
+    x: query<HTMLInputElement>(`#${prefix}-x`),
+    facebook: query<HTMLInputElement>(`#${prefix}-fb`),
+    note: query<HTMLTextAreaElement>(`#${prefix}-note`),
+    name: query<HTMLInputElement>(`#${prefix}-name`),
+  };
+}
+
+function checkSocial(input: HTMLInputElement, network: SocialNetwork): boolean {
+  const result = parseSocialUrl(input.value, network);
+  if (result !== null && 'error' in result) {
+    input.setCustomValidity(result.error);
+    return false;
+  }
+  input.setCustomValidity('');
+  return true;
+}
+
+function selectedRole(form: HTMLFormElement, name: string): AckRole {
+  const checked = form.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`);
+  const value = checked?.value;
+  return value !== undefined && (ACK_ROLES as readonly string[]).includes(value)
+    ? (value as AckRole)
+    : 'observer';
+}
+
+function openAckDialog(entry: Entry): void {
+  activeEntry = entry;
+  activePayload = null;
+  ackForm.reset();
+  query<HTMLInputElement>('#ack-entry').value = entry.id;
+  query<HTMLElement>('#ack-title').textContent = `Acknowledge this ${entry.kind}`;
+  query<HTMLElement>('#ack-quote').textContent = `“${entry.text.replace(/\n/g, ' ')}”`;
+  query<HTMLSpanElement>('#ack-count').textContent = '0';
+
+  if (lastIdentity !== null) {
+    query<HTMLInputElement>('#ack-name').value = lastIdentity.name;
+    const role = ackForm.querySelector<HTMLInputElement>(
+      `input[name="ack-role"][value="${lastIdentity.role}"]`,
+    );
+    if (role !== null) role.checked = true;
+    query<HTMLInputElement>('#ack-x').value = lastIdentity.x;
+    query<HTMLInputElement>('#ack-fb').value = lastIdentity.facebook;
+  }
+
+  ackFormView.hidden = false;
+  ackSuccess.hidden = true;
+  dialog.setAttribute('aria-labelledby', 'ack-title');
+  if (!dialog.open) dialog.showModal();
+  query<HTMLInputElement>('#ack-name').focus();
+}
+
+function closeAckDialog(): void {
+  if (dialog.open) dialog.close();
+  activeEntry = null;
+  activePayload = null;
+}
+
+function ackSuccessCopy(payload: AckPayload, entry: Entry): string {
+  return `Thank you, ${payload.name}. Your ${roleLabel(payload.role)} acknowledgment of “${entry.theme}” is held on this device. Carry it to Sir Collins and others you trust with a link.`;
+}
+
+function mailtoFor(payload: AckPayload): string {
+  const entry = entries.find((item) => item.id === payload.entry);
+  const subject = entry === undefined
+    ? `Response from ${payload.name}`
+    : `Acknowledgment from ${payload.name}`;
+  const lines = [
+    'Hello Sir Collins,',
+    '',
+    `Name: ${payload.name}`,
+    `Role: ${roleLabel(payload.role)}`,
+    ...(payload.x !== undefined ? [`X: ${payload.x}`] : []),
+    ...(payload.facebook !== undefined ? [`Facebook: ${payload.facebook}`] : []),
+    ...(entry !== undefined ? ['', `Acknowledging: “${entry.text.replace(/\n/g, ' ')}”`] : []),
+    ...(payload.note !== undefined ? ['', `What I share or post: ${payload.note}`] : []),
+    '',
+    `Carrier link: ${ackLink(shareOrigin(), payload)}`,
+  ];
+  return `mailto:${CONTACT.professionalEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\n'))}`;
+}
+
+/* ------------------------------------------------------------------- share */
+
+interface ShareContent {
+  readonly title: string;
+  readonly text: string;
+  readonly url: string;
+  readonly qr: boolean;
+}
+
+const shareDialog = query<HTMLDialogElement>('#share-dialog');
+const shareCanvas = query<HTMLCanvasElement>('#share-qr');
+let shareContent: ShareContent | null = null;
+
+function openShare(content: ShareContent): void {
+  shareContent = content;
+  query<HTMLElement>('#share-title').textContent = content.title;
+  query<HTMLElement>('#share-text').textContent = content.text;
+  query<HTMLElement>('#share-url').textContent = content.url;
+
+  const qrWrap = query<HTMLDivElement>('#share-qr-wrap');
+  const download = query<HTMLButtonElement>('#share-download');
+  qrWrap.hidden = !content.qr;
+  download.hidden = !content.qr;
+  if (content.qr) {
+    try {
+      paintQr(shareCanvas, content.url, { pixels: 640 });
+    } catch {
+      qrWrap.hidden = true;
+      download.hidden = true;
+    }
+  }
+
+  if (!shareDialog.open) shareDialog.showModal();
+}
+
+/* ------------------------------------------------------------ token/giving */
+
+function applyReceptive(): void {
+  const active = state.receptive;
+  document.documentElement.dataset['receptive'] = String(active);
+  const card = query<HTMLElement>('#receptive');
+  card.dataset['active'] = String(active);
+  const toggle = query<HTMLButtonElement>('#receptive-toggle');
+  toggle.setAttribute('aria-pressed', String(active));
+  query<HTMLElement>('#receptive-status').textContent = active
+    ? 'Open · Token/Giving Mode is active on this device.'
+    : 'Closed · open the door when you are ready.';
+  query<HTMLElement>('#receptive-badge').hidden = !active;
+}
+
+/* ------------------------------------------------------------------- boot */
+
+/**
+ * Both role fieldsets are generated from `ACK_ROLES`, so a new role cannot be
+ * added in one form and forgotten in the other.
+ */
+function renderRoleOptions(): void {
+  for (const group of document.querySelectorAll<HTMLDivElement>('[data-role-options]')) {
+    const name = group.dataset['roleOptions'];
+    if (name === undefined) continue;
+    const defaultRole = group.dataset['defaultRole'] ?? 'observer';
+    const fragment = document.createDocumentFragment();
+
+    for (const role of ACK_ROLES) {
+      const label = element('label', 'role-option');
+      const input = element('input');
+      input.type = 'radio';
+      input.name = name;
+      input.value = role;
+      input.checked = role === defaultRole;
+
+      const body = element('span', 'role-option__body');
+      const icon = element('span', 'role-option__icon');
+      icon.append(iconNode(ACK_ROLE_ICON[role]));
+
+      body.append(
+        icon,
+        element('span', 'role-option__title', ACK_ROLE_LABEL[role]),
+        element('span', 'role-option__desc', ACK_ROLE_DESCRIPTION[role]),
+      );
+      label.append(input, body);
+      fragment.append(label);
+    }
+
+    group.replaceChildren(fragment);
+  }
 }
 
 function renderRoles(): void {
   const list = query<HTMLUListElement>('#role-list');
   const fragment = document.createDocumentFragment();
-  for (const role of ROLES) {
-    const item = document.createElement('li');
-    item.textContent = role;
+  ROLES.forEach((role, index) => {
+    const item = element('li');
+    item.append(iconNode(ROLE_ICONS[index] ?? 'spark'), element('span', undefined, role));
     fragment.append(item);
-  }
+  });
   list.replaceChildren(fragment);
 }
 
 function renderContacts(): void {
   const email = query<HTMLAnchorElement>('#contact-email');
   email.href = `mailto:${CONTACT.professionalEmail}`;
-  email.textContent = CONTACT.professionalEmail;
-
   const telegram = query<HTMLAnchorElement>('#contact-telegram');
   telegram.href = CONTACT.telegram;
-  telegram.textContent = 'Telegram';
+}
+
+function renderRarityLegend(): void {
+  const host = query<HTMLDivElement>('#rarity-tiers');
+  const fragment = document.createDocumentFragment();
+  for (const tier of RARITY_TIERS) {
+    const chip = element('span', `tier tier--${tier.id}`);
+    chip.append(iconNode(tier.icon as IconName), element('span', undefined, tier.label));
+    fragment.append(chip);
+  }
+  host.replaceChildren(fragment);
+  query<HTMLParagraphElement>('#rarity-note').textContent = RARITY_SCALE_NOTE;
+}
+
+function renderYear(): void {
+  const node = document.querySelector<HTMLSpanElement>('#year');
+  if (node !== null) node.textContent = String(new Date().getFullYear());
 }
 
 const ENGINE_LABEL: Record<StorageEngine, string> = {
   opfs: 'Sovereign storage: OPFS',
-  localstorage: 'Storage: localStorage fallback',
-  memory: 'Storage: in-memory only (not persisted)',
+  localstorage: 'Storage: on this device',
+  memory: 'Storage: volatile (not saved)',
 };
 
 function reportStorage(engine: StorageEngine): void {
@@ -142,6 +705,335 @@ function reportStorage(engine: StorageEngine): void {
   badge.dataset['engine'] = engine;
   badge.hidden = engine === 'opfs';
 }
+
+function initReveal(): void {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!('IntersectionObserver' in window)) return;
+
+  const targets = [...document.querySelectorAll<HTMLElement>('.section, .legend, .contact')];
+  const observer = new IntersectionObserver(
+    (items) => {
+      for (const item of items) {
+        if (!item.isIntersecting) continue;
+        item.target.classList.add('is-visible');
+        observer.unobserve(item.target);
+      }
+    },
+    { rootMargin: '0px 0px -7% 0px', threshold: 0.05 },
+  );
+
+  for (const target of targets) {
+    if (target.getBoundingClientRect().top > window.innerHeight * 0.94) {
+      target.classList.add('will-reveal');
+      observer.observe(target);
+    }
+  }
+}
+
+function scrollToEntry(entryId: string): void {
+  const node = document.getElementById(`entry-${entryId}`);
+  if (node === null) return;
+  node.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    block: 'center',
+  });
+  node.classList.add('is-target');
+  window.setTimeout(() => node.classList.remove('is-target'), 2_800);
+}
+
+function carrierLinkText(payload: AckPayload): string {
+  if (payload.entry === 'general') return `A response from ${payload.name}`;
+  const entry = entries.find((item) => item.id === payload.entry);
+  return entry === undefined
+    ? `An acknowledgment from ${payload.name}`
+    : `An acknowledgment of “${entry.theme}” from ${payload.name}`;
+}
+
+function renderCarrier(payload: AckPayload): void {
+  const mount = query<HTMLDivElement>('#carrier');
+  const entry = entries.find((item) => item.id === payload.entry);
+  const card = element('aside', 'carrier glass');
+  card.setAttribute('role', 'region');
+  card.setAttribute('aria-label', 'Acknowledgment carried by link');
+
+  const head = element('div', 'carrier__head');
+  const icon = element('span', 'tile');
+  icon.append(iconNode('gift', 'icon icon--tile'));
+  const copy = element('div', 'carrier__copy');
+  copy.append(
+    element('p', 'eyebrow', payload.entry === 'general' ? 'A response carried by link' : 'An acknowledgment carried by link'),
+    element(
+      'p',
+      'carrier__line',
+      entry === undefined
+        ? `${payload.name} · ${roleLabel(payload.role)}`
+        : `${payload.name} · ${roleLabel(payload.role)} · “${entry.theme}”`,
+    ),
+  );
+  if (payload.note !== undefined) {
+    copy.append(element('p', 'carrier__note', `“${payload.note}”`));
+  }
+  head.append(icon, copy);
+
+  const actions = element('div', 'carrier__actions');
+  const accept = element('button', 'btn btn--primary');
+  accept.type = 'button';
+  accept.append(iconNode('seal'), element('span', undefined, 'Add to this device'));
+  const dismiss = element('button', 'btn btn--ghost', 'Dismiss');
+  dismiss.type = 'button';
+  actions.append(accept, dismiss);
+
+  accept.addEventListener('click', () => {
+    const ack = payloadToAck(payload, 'link');
+    const duplicate = addAcknowledgment(state, ack) === state;
+    void commit(addAcknowledgment(state, ack)).then(() => {
+      card.remove();
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+      toast(duplicate ? 'Already held on this device.' : 'Acknowledgment added to this device.');
+      if (entry !== undefined) scrollToEntry(entry.id);
+      else query<HTMLElement>('#voices').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+
+  dismiss.addEventListener('click', () => {
+    card.remove();
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    toast('Carrier link dismissed.');
+  });
+
+  card.append(head, actions);
+  mount.replaceChildren(card);
+}
+
+/* ------------------------------------------------------------------ events */
+
+const entries = readEntries();
+const validEntryIds = new Set(entries.map((entry) => entry.id));
+
+query<HTMLButtonElement>('#receptive-toggle').addEventListener('click', () => {
+  const next = !state.receptive;
+  void commit(setReceptive(state, next));
+  toast(next ? 'Token/Giving Mode open.' : 'Token/Giving Mode closed.');
+});
+
+for (const input of [
+  query<HTMLInputElement>('#respond-x'),
+  query<HTMLInputElement>('#respond-fb'),
+  query<HTMLInputElement>('#ack-x'),
+  query<HTMLInputElement>('#ack-fb'),
+]) {
+  input.addEventListener('input', () => input.setCustomValidity(''));
+}
+
+for (const [noteId, countId] of [
+  ['respond-note', 'respond-count'],
+  ['ack-note', 'ack-count'],
+] as const) {
+  const note = query<HTMLTextAreaElement>(`#${noteId}`);
+  const count = query<HTMLSpanElement>(`#${countId}`);
+  note.addEventListener('input', () => {
+    count.textContent = String(note.value.length);
+  });
+}
+
+ackForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (activeEntry === null) return;
+  const entry = activeEntry;
+  const fields = socialInputs('ack');
+  if (!checkSocial(fields.x, 'x') || !checkSocial(fields.facebook, 'facebook')) {
+    ackForm.reportValidity();
+    return;
+  }
+
+  const payload = createAckPayload({
+    entry: entry.id,
+    name: fields.name.value,
+    role: selectedRole(ackForm, 'ack-role'),
+    x: fields.x.value,
+    facebook: fields.facebook.value,
+    note: fields.note.value,
+  });
+  if (payload === null) {
+    toast('Add your name to continue.');
+    fields.name.focus();
+    return;
+  }
+
+  activePayload = payload;
+  void commit(addAcknowledgment(state, payloadToAck(payload, 'local')));
+  lastIdentity = {
+    name: payload.name,
+    role: payload.role,
+    x: payload.x ?? '',
+    facebook: payload.facebook ?? '',
+  };
+
+  query<HTMLElement>('#ack-success-title').textContent = 'Thank you';
+  query<HTMLElement>('#ack-success-copy').textContent = ackSuccessCopy(payload, entry);
+  ackFormView.hidden = true;
+  ackSuccess.hidden = false;
+  dialog.setAttribute('aria-labelledby', 'ack-success-title');
+  toast('Acknowledgment held on this device.');
+});
+
+query<HTMLButtonElement>('#ack-copy-link').addEventListener('click', () => {
+  if (activePayload === null) return;
+  void copyText(ackLink(shareOrigin(), activePayload)).then((copied) => {
+    toast(copied ? 'Acknowledgment link copied.' : 'Could not copy the link.');
+  });
+});
+
+query<HTMLButtonElement>('#ack-share-link').addEventListener('click', () => {
+  if (activePayload === null) return;
+  openShare({
+    title: 'An acknowledgment for Sir Collins',
+    text: carrierLinkText(activePayload),
+    url: ackLink(shareOrigin(), activePayload),
+    qr: false,
+  });
+});
+
+query<HTMLButtonElement>('#ack-email-link').addEventListener('click', () => {
+  if (activePayload === null) return;
+  window.location.href = mailtoFor(activePayload);
+});
+
+for (const id of ['#ack-close', '#ack-cancel', '#ack-done']) {
+  query<HTMLButtonElement>(id).addEventListener('click', closeAckDialog);
+}
+
+const respondForm = query<HTMLFormElement>('#respond-form');
+let responsePayload: AckPayload | null = null;
+
+respondForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const fields = socialInputs('respond');
+  if (!checkSocial(fields.x, 'x') || !checkSocial(fields.facebook, 'facebook')) {
+    respondForm.reportValidity();
+    return;
+  }
+
+  const payload = createAckPayload({
+    entry: 'general',
+    name: fields.name.value,
+    role: selectedRole(respondForm, 'respond-role'),
+    x: fields.x.value,
+    facebook: fields.facebook.value,
+    note: fields.note.value,
+  });
+  if (payload === null) {
+    toast('Add your name to continue.');
+    fields.name.focus();
+    return;
+  }
+
+  responsePayload = payload;
+  void commit(addAcknowledgment(state, payloadToAck(payload, 'local')));
+
+  const result = query<HTMLDivElement>('#response-result');
+  query<HTMLElement>('#response-result-copy').textContent =
+    `Thank you, ${payload.name}. Your ${roleLabel(payload.role)} response is sealed on this device.`;
+  result.hidden = false;
+  respondForm.reset();
+  query<HTMLSpanElement>('#respond-count').textContent = '0';
+  result.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    block: 'center',
+  });
+  toast('Response held on this device.');
+});
+
+query<HTMLButtonElement>('#response-copy').addEventListener('click', () => {
+  if (responsePayload === null) return;
+  void copyText(ackLink(shareOrigin(), responsePayload)).then((copied) => {
+    toast(copied ? 'Response link copied.' : 'Could not copy the link.');
+  });
+});
+
+query<HTMLButtonElement>('#response-email').addEventListener('click', () => {
+  if (responsePayload === null) return;
+  window.location.href = mailtoFor(responsePayload);
+});
+
+query<HTMLButtonElement>('#response-telegram').addEventListener('click', () => {
+  if (responsePayload === null) return;
+  const url = ackLink(shareOrigin(), responsePayload);
+  const text = `A response for Sir Collins from ${responsePayload.name}`;
+  window.open(
+    `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+    '_blank',
+    'noopener,noreferrer',
+  );
+});
+
+query<HTMLButtonElement>('#response-clear').addEventListener('click', () => {
+  responsePayload = null;
+  query<HTMLDivElement>('#response-result').hidden = true;
+});
+
+query<HTMLButtonElement>('#share-copy').addEventListener('click', () => {
+  if (shareContent === null) return;
+  void copyText(shareContent.url).then((copied) => {
+    toast(copied ? 'Link copied.' : 'Could not copy the link.');
+  });
+});
+
+query<HTMLButtonElement>('#share-native').addEventListener('click', () => {
+  if (shareContent === null) return;
+  if (!('share' in navigator)) {
+    void copyText(shareContent.url).then(() => toast('Link copied instead.'));
+    return;
+  }
+  void navigator
+    .share({ title: shareContent.title, text: shareContent.text, url: shareContent.url })
+    .catch(() => {
+      /* The user dismissed the sheet; nothing to report. */
+    });
+});
+
+query<HTMLButtonElement>('#share-download').addEventListener('click', () => {
+  if (shareContent === null || !shareContent.qr) return;
+  downloadCanvas(shareCanvas, 'sir-collins-portal-qr.png');
+  toast('QR saved.');
+});
+
+for (const id of ['#share-close', '#share-done']) {
+  query<HTMLButtonElement>(id).addEventListener('click', () => shareDialog.close());
+}
+
+query<HTMLButtonElement>('#portal-qr').addEventListener('click', () => {
+  openShare({
+    title: 'Carry the portal',
+    text: SITE_TAGLINE,
+    url: `${shareOrigin()}/`,
+    qr: true,
+  });
+});
+
+for (const node of document.querySelectorAll<HTMLDialogElement>('dialog')) {
+  node.addEventListener('click', (event) => {
+    if (event.target === node) node.close();
+  });
+}
+
+document.addEventListener('click', (event) => {
+  for (const wrap of document.querySelectorAll<HTMLDivElement>('.rarity.is-open')) {
+    if (event.target instanceof Node && wrap.contains(event.target)) continue;
+    wrap.classList.remove('is-open');
+    const trigger = wrap.querySelector<HTMLButtonElement>('.rarity__trigger');
+    trigger?.setAttribute('aria-expanded', 'false');
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  for (const wrap of document.querySelectorAll<HTMLDivElement>('.rarity.is-open')) {
+    wrap.classList.remove('is-open');
+    const trigger = wrap.querySelector<HTMLButtonElement>('.rarity__trigger');
+    trigger?.setAttribute('aria-expanded', 'false');
+  }
+});
 
 async function registerServiceWorker(): Promise<void> {
   if (!('serviceWorker' in navigator)) return;
@@ -152,31 +1044,40 @@ async function registerServiceWorker(): Promise<void> {
   }
 }
 
-function renderYear(): void {
-  const year = new Date().getFullYear();
-  const node = document.querySelector<HTMLSpanElement>('#year');
-  if (node !== null) node.textContent = String(year);
-}
-
 async function boot(): Promise<void> {
-  writeJsonLd();
+  hydrateIcons();
+  renderRoleOptions();
   renderRoles();
   renderContacts();
+  renderRarityLegend();
   renderYear();
+  writeJsonLd(entries);
+  renderEntries(entries);
 
-  const store = await createSovereignStore();
+  store = await createSovereignStore();
   reportStorage(store.engine);
+  state = parseState(await store.get<unknown>(STATE_KEY));
+  await store.remove(LEGACY_TEASERS_KEY);
+  refreshAll();
+  initReveal();
 
-  // Cached teasers win only when the network copy is missing.
-  const cached = await store.get<readonly Teaser[]>(TEASERS_KEY);
-  const teasers = cached ?? readTeasers();
-  if (cached === undefined) {
-    await store.set(TEASERS_KEY, [...teasers]);
+  const rawCarrier = window.location.hash.startsWith('#ack=')
+    ? window.location.hash.slice('#ack='.length)
+    : null;
+  if (rawCarrier !== null) {
+    const payload = decodeAck(rawCarrier, validEntryIds);
+    if (payload !== null) {
+      renderCarrier(payload);
+    } else {
+      toast('That carrier link could not be read.');
+    }
+  } else if (window.location.hash.startsWith('#entry-')) {
+    const entryId = window.location.hash.slice('#entry-'.length);
+    window.setTimeout(() => scrollToEntry(entryId), 120);
   }
-  renderTeasers(teasers);
 
   document.documentElement.dataset['ready'] = 'true';
-  document.title = `${SITE_NAME} — Sovereign Digital Twin`;
+  document.title = `${SITE_NAME} — The Living Portal`;
 
   await registerServiceWorker();
 }

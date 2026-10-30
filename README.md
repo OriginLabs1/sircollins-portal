@@ -17,23 +17,33 @@ Read these before changing anything:
 
 ## Current state
 
-Version `0.0.1` — core shell only. Implemented:
+Version `0.0.1` — the living portal. Implemented:
 
 - Strict TypeScript + Vite build (no framework, no runtime dependencies).
-- **Portrait** (`public/brand/signature.jpg`): shown in the hero, declared as
-  `Person.image` in JSON-LD, and used for Open Graph / Twitter cards.
+- **Emblem-led hero** (`public/brand/logo.png`) above the verbatim hero copy; the portrait was
+  removed by instruction.
 - **Liquid Glass** base styles: aurora field, single-layer `backdrop-filter`, spring
   cubic-beziers, `prefers-reduced-motion` and `prefers-contrast` branches.
+- **Inspirations & Reflections** (`src/data/entries.json`): five verbatim entries, each with
+  Love, Acknowledge, Share, “Acknowledged by” and a qualitative rarity symbol (hover/focus
+  for the breakdown).
+- **Acknowledgment** (`src/lib/portal.ts`): five roles, local-first state, carrier links
+  (`#ack=…`) that can be imported on another device, and a responder form (name, X, Facebook,
+  why/where you share).
+- **Token/Giving Mode** with the exact openness statement, plus a share dialog with
+  client-side QR codes for public destinations.
 - **Sovereign storage adapter** (`src/lib/storage.ts`): OPFS → localStorage → in-memory,
-  probed at runtime, never throws. The header badge appears only when the engine is not OPFS.
-- **JSON-LD** (`src/lib/schema.ts`): Person, WebSite and Blog graphs generated from one
-  source, injected at boot. This is the same builder the CBOR-LD path will consume.
+  probed at runtime, never throws.
+- **JSON-LD** (`src/lib/schema.ts`): Person, WebSite and CollectionPage (Quotation/Question)
+  generated from one source, injected at boot.
 - **Service worker** (`public/sw.js`): network-first navigation with offline shell fallback,
   stale-while-revalidate for same-origin assets.
-- **Tests** (`tests/`): storage fallback chain, corrupt-payload recovery, JSON-LD shape.
+- **Tests** (`tests/`): storage fallback chain, corrupt-payload recovery, JSON-LD shape,
+  carrier round-trips, role weights, rarity tiers.
 
 Not yet built: the Private AI Agent interaction layer, `sqlite-vec` semantic search,
-CBOR-LD encoding, the payment adapter, and real (non-draft) teaser content.
+CBOR-LD encoding, the payment adapter, and globally aggregated acknowledgments (which need a
+server-side store).
 
 ## Commands
 

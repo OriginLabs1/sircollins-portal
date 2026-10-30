@@ -13,7 +13,11 @@ universal, and robust** digital entity.
 - **Roles**: Unique Pioneer | Leadership Consultant | Royal Tutor | ICT Strategist | Creative Genius
 - **Domain**: `sircollins.coreconcept1.net` (primary entry point)
 - **Project Directory**: `~/projects/sircollins-portal`
-- **Portrait**: `public/brand/signature.jpg` (used in the hero, Open Graph and JSON-LD)
+- **Emblem**: `public/brand/logo.png` (transparent PNG, 696×587) — the hero mark, the
+  brand badge, the Open Graph/Twitter image and the shell asset. It is **not** `Person.image`:
+  an emblem is not a depiction of the person.
+- **Hero copy**: “Life, reality, integrity, and unique impact —” /
+  “The living portal of the Life and unique realities of Sir Collins.”
 
 ## 3. Architectural Pillars (Acceptance Criteria)
 
@@ -46,10 +50,12 @@ Every line of code, design decision, and feature must satisfy these criteria:
 - **Version**: 0.0.1 (core architecture live).
 - **Status**: Active development; production is a static Pages deployment behind the custom
   domain.
-- **Live now**: strict TypeScript build, Liquid Glass shell, portrait, JSON-LD Person/WebSite/Blog,
-  OPFS/localStorage storage adapter, service worker, draft teaser cards.
-- **Immediate goal**: integrate the Private AI Agent interaction layer and replace the draft
-  teaser text with verbatim material from Sir Collins.
+- **Live now**: strict TypeScript build; Liquid Glass shell led by the emblem; JSON-LD
+  Person/WebSite/CollectionPage; OPFS/localStorage storage adapter; service worker; the
+  verbatim **Inspirations** (2) and **Reflections** (3) modules; Love, Acknowledge, Share per
+  entry; “Acknowledged by”; responder form with name, X, Facebook and a why/where note;
+  carrier links; Token/Giving Mode; qualitative rarity symbols.
+- **Interaction model**: [see §7](#7-interaction-model).
 
 ## 6. Contact & Channels
 
@@ -58,3 +64,23 @@ Every line of code, design decision, and feature must satisfy these criteria:
 - **Telegram**: [t.me/CollinsRoyalMedium](https://t.me/CollinsRoyalMedium)
 
 > `access1@tutamail.com` is the professional channel. `sircollins1@protonmail.com` is personal.
+
+## 7. Interaction Model
+
+- **Token/Giving Mode** is the user-facing name of the openness state (internally the
+  `receptive` flag, kept for stored-state compatibility). The exact openness copy is
+  rendered verbatim and is not paraphrased.
+- **Roles** (`src/lib/schema.ts` → `ACK_ROLES`), lightest claim to deepest:
+  Observer · Membership Aspirant · Communicator · Community Active Member · Responder.
+  Membership roles never outrank action on the rarity scale.
+- **Acknowledge** is the primary validating interaction. It records depth of witness, not
+  popularity, and drives the **rarity symbol**. No money moves.
+- **Love** is a private, personal signal; it never affects rarity.
+- **Carrier links** (`#ack=<base64url payload>`) carry one acknowledgment from the device
+  that created it to Sir Collins or to anyone the sender chooses. Nothing is uploaded.
+- **Rarity** = intrinsic curation weight (0–5) + weighted acknowledgments
+  (Observer 1, Aspirant 1, Communicator 2, Active Member 2, Responder 3) mapped onto
+  Very Common → Common → Uncommon → Rare → Unique. The UI shows the symbol; hover/focus or
+  tap reveals the breakdown. Raw counts are never the surface.
+- **QR codes** carry public destinations only (the portal, an entry). Acknowledgment links
+  contain a person's details, so they are shared directly and never printed as a code.

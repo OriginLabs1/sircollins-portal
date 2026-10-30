@@ -41,13 +41,13 @@
   pointer-events: none;
 }
 
-.teaser:hover,
-.teaser:focus-within {
+.entry:hover,
+.entry:focus-within {
   border-color: var(--hairline-strong);
   box-shadow:
     0 1px 0 0 rgb(255 255 255 / 12%) inset,
     0 28px 60px -28px rgb(0 0 0 / 78%),
-    0 0 0 1px color-mix(in oklab, var(--aurora-2) 22%, transparent);
+    0 0 0 1px color-mix(in oklab, var(--emblem-light) 22%, transparent);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

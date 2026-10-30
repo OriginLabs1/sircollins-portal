@@ -1,0 +1,42 @@
+{
+  "$comment": "Verbatim material from Sir Collins. Do not edit the text without an explicit instruction. `weight` is the intrinsic curation weight (0-5) that sets the floor for the rarity scale; acknowledgment raises it.",
+  "items": [
+    {
+      "id": "love-is-the-best-life",
+      "kind": "inspiration",
+      "theme": "Love",
+      "text": "The best LIFE to live is LOVE.\nThe best time to love is now.\nLive your best life NOW!",
+      "attribution": "Sir Collins",
+      "weight": 5
+    },
+    {
+      "id": "good-for-bad-reasons",
+      "kind": "inspiration",
+      "theme": "Integrity",
+      "text": "It is possible to do GOOD\nfor BAD REASONS.",
+      "attribution": "Sir Collins",
+      "weight": 4
+    },
+    {
+      "id": "good-or-right",
+      "kind": "reflection",
+      "theme": "Discernment",
+      "text": "Should we be more concerned about been GOOD or been RIGHT?",
+      "weight": 3
+    },
+    {
+      "id": "perceive-realities",
+      "kind": "reflection",
+      "theme": "Perception",
+      "text": "What realities can we perceive and understand with accuracy and discernment?",
+      "weight": 2
+    },
+    {
+      "id": "the-truth",
+      "kind": "reflection",
+      "theme": "Truth",
+      "text": "What is THE TRUTH about past, recent and present realities?",
+      "weight": 4
+    }
+  ]
+}

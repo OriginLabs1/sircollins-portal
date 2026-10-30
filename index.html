@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en" data-ready="false">
+<html lang="en" data-ready="false" data-receptive="false">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Sir Collins Chris — Sovereign Digital Twin</title>
+    <title>Sir Collins — The Living Portal</title>
     <meta
       name="description"
-      content="The sovereign digital twin of Sir Collins Chris: leadership consulting, ICT strategy, royal tutoring, and creative work — offline-first and machine-readable."
+      content="The living portal of the Life and unique realities of Sir Collins — featured inspirations, reflections, acknowledgment, and a community of witness."
     />
     <meta name="theme-color" content="#05060f" />
     <meta name="color-scheme" content="dark" />
@@ -16,20 +16,25 @@
     <link rel="apple-touch-icon" href="/icons/mark.svg" />
 
     <meta property="og:type" content="profile" />
-    <meta property="og:title" content="Sir Collins Chris — Sovereign Digital Twin" />
+    <meta property="og:title" content="Sir Collins — The Living Portal" />
     <meta
       property="og:description"
-      content="Leadership consulting, ICT strategy, royal tutoring, and creative work. Local-first, machine-readable."
+      content="Life, reality, integrity, and unique impact — the living portal of the Life and unique realities of Sir Collins."
     />
     <meta property="og:url" content="https://sircollins.coreconcept1.net/" />
-    <meta property="og:image" content="https://sircollins.coreconcept1.net/brand/signature.jpg" />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="1020" />
-    <meta property="og:image:height" content="1280" />
-    <meta property="og:image:alt" content="Portrait of Sir Collins Chris" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://sircollins.coreconcept1.net/brand/signature.jpg" />
-    <meta name="twitter:image:alt" content="Portrait of Sir Collins Chris" />
+    <meta property="og:image" content="https://sircollins.coreconcept1.net/brand/logo.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="696" />
+    <meta property="og:image:height" content="587" />
+    <meta property="og:image:alt" content="The Sir Collins emblem" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Sir Collins — The Living Portal" />
+    <meta
+      name="twitter:description"
+      content="Life, reality, integrity, and unique impact — the living portal of the Life and unique realities of Sir Collins."
+    />
+    <meta name="twitter:image" content="https://sircollins.coreconcept1.net/brand/logo.png" />
+    <meta name="twitter:image:alt" content="The Sir Collins emblem" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -47,72 +52,487 @@
 
     <header class="site-header">
       <div class="shell">
-        <a class="brand" href="/">
-          <span class="brand__mark" aria-hidden="true">SC</span>
-          <span>Sir Collins Chris</span>
+        <a class="brand" href="/" aria-label="Sir Collins — home">
+          <img
+            class="brand__emblem"
+            src="/brand/logo.png"
+            alt=""
+            width="34"
+            height="29"
+            decoding="async"
+          />
+          <span class="brand__name">Sir Collins</span>
         </a>
-        <span id="storage-status" class="storage-badge" hidden></span>
+        <nav class="site-nav" aria-label="Portal sections">
+          <a href="#inspirations"><span data-icon="spark"></span><span>Inspirations</span></a>
+          <a href="#reflections"><span data-icon="question"></span><span>Reflections</span></a>
+          <a href="#respond"><span data-icon="pen"></span><span>Respond</span></a>
+        </nav>
+        <div class="header__meta">
+          <span id="receptive-badge" class="receptive-badge" hidden>
+            <span data-icon="open"></span>
+            <span>Token/Giving</span>
+          </span>
+          <span id="storage-status" class="storage-badge" hidden></span>
+        </div>
       </div>
     </header>
 
     <main id="main" class="shell">
       <p id="fatal" class="fatal" role="status" hidden></p>
+      <div id="carrier" class="carrier-mount"></div>
 
-      <section class="hero">
-        <div class="hero__body">
-          <p class="eyebrow">Sovereign Digital Twin</p>
-          <h1>Leadership, strategy, and craft — held in your own hands.</h1>
-          <p class="hero__lede">
-            An offline-first encyclopedia of the work: consulting, ICT strategy, tutelage, and
-            creative practice. Readable by people, parseable by machines, and owned by its
-            principal.
-          </p>
-          <ul id="role-list" class="roles" aria-label="Roles"></ul>
-        </div>
-        <figure class="portrait">
-          <span class="portrait__frame">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__halo" aria-hidden="true"></div>
+        <div class="hero__inner">
+          <div class="hero__logo">
+            <span class="hero__logo-glow" aria-hidden="true"></span>
             <img
-              class="portrait__image"
-              src="/brand/signature.jpg"
-              alt="Portrait of Sir Collins Chris"
-              width="1020"
-              height="1280"
+              src="/brand/logo.png"
+              alt="The Sir Collins emblem"
+              width="696"
+              height="587"
               decoding="async"
               fetchpriority="high"
             />
-          </span>
-          <figcaption>Principal · Sovereign Digital Twin</figcaption>
-        </figure>
+          </div>
+          <h1 id="hero-title">Life, reality, integrity, and unique impact <span class="hero__dash">—</span></h1>
+          <p class="hero__lede">The living portal of the Life and unique realities of Sir Collins.</p>
+          <ul id="role-list" class="roles" aria-label="Roles"></ul>
+          <a class="hero__enter" href="#inspirations">
+            <span>Enter the portal</span>
+            <span data-icon="arrow-down"></span>
+          </a>
+        </div>
+      </section>
+
+      <section
+        class="receptive glass"
+        id="receptive"
+        aria-labelledby="receptive-title"
+        data-active="false"
+      >
+        <div class="receptive__glow" aria-hidden="true"></div>
+        <div class="receptive__head">
+          <div class="receptive__title">
+            <span class="tile" data-icon="gift" data-icon-class="icon icon--tile"></span>
+            <div>
+              <p class="eyebrow">Giving</p>
+              <h2 id="receptive-title">Token/Giving Mode</h2>
+            </div>
+          </div>
+          <button
+            id="receptive-toggle"
+            class="receptive__toggle"
+            type="button"
+            aria-pressed="false"
+            aria-controls="receptive-copy"
+          >
+            <span class="receptive__toggle-label">Token/Giving</span>
+            <span class="switch" aria-hidden="true"><span class="switch__thumb"></span></span>
+          </button>
+        </div>
+        <blockquote id="receptive-copy" class="receptive__copy">
+          Sir Collins and his community network are open and receptive to the right people and the
+          right resources or gifts from those who love and trust our uniqueness
+        </blockquote>
+        <p class="receptive__status" id="receptive-status">
+          Closed · open the door when you are ready.
+        </p>
+      </section>
+
+      <section class="section" id="inspirations" aria-labelledby="inspirations-title">
+        <div class="section__head">
+          <div class="section__title">
+            <span class="tile" data-icon="spark" data-icon-class="icon icon--tile"></span>
+            <div>
+              <p class="eyebrow">Aphorisms to live by</p>
+              <h2 id="inspirations-title">Featured Inspirations</h2>
+            </div>
+          </div>
+          <p class="section__note">Held as first principles, carried by those who acknowledge them.</p>
+        </div>
+        <div id="inspiration-grid" class="entry-grid"></div>
       </section>
 
       <section class="section" id="reflections" aria-labelledby="reflections-title">
         <div class="section__head">
-          <h2 id="reflections-title">Inspirations &amp; Reflections</h2>
-          <p>Selected notes</p>
+          <div class="section__title">
+            <span class="tile" data-icon="question" data-icon-class="icon icon--tile"></span>
+            <div>
+              <p class="eyebrow">Questions held open</p>
+              <h2 id="reflections-title">Reflections</h2>
+            </div>
+          </div>
+          <p class="section__note">Not answers to close, but realities to discern.</p>
         </div>
-        <div id="teaser-grid" class="teaser-grid"></div>
+        <div id="reflection-grid" class="entry-grid"></div>
+      </section>
+
+      <details class="legend glass" id="rarity">
+        <summary>
+          <span class="tile tile--sm" data-icon="gem" data-icon-class="icon icon--tile"></span>
+          <span class="legend__summary">How rarity works</span>
+          <span class="legend__chevron" data-icon="chevron-down"></span>
+        </summary>
+        <div class="legend__body">
+          <div id="rarity-tiers" class="legend__tiers" aria-label="Rarity scale"></div>
+          <p id="rarity-note" class="legend__note"></p>
+          <p class="legend__detail">
+            Observers weigh 1, Communicators 2, Responders 3. Curation sets the floor. Hover or
+            focus a rarity symbol on any card to see its exact breakdown. Nothing here is for
+            sale, and no raw count is displayed on the surface.
+          </p>
+        </div>
+      </details>
+
+      <section class="section respond" id="respond" aria-labelledby="respond-title">
+        <div class="section__head">
+          <div class="section__title">
+            <span class="tile" data-icon="pen" data-icon-class="icon icon--tile"></span>
+            <div>
+              <p class="eyebrow">Add your voice</p>
+              <h2 id="respond-title">Respond</h2>
+            </div>
+          </div>
+          <p class="section__note">Your name, why you share, and where you share.</p>
+        </div>
+
+        <div class="respond__grid">
+          <div class="respond__intro">
+            <p class="respond__lede">
+              You can respond to Sir Collins or the work by saying who you are, why you share and
+              where you share. Your Response is held on this device and can travel to Sir Collins
+              and others around the world as a link you choose to share.
+            </p>
+            <ul class="respond__promises">
+              <li><span data-icon="lock"></span> Held on this device until you choose.</li>
+              <li><span data-icon="link"></span> A carrier link can reach Sir Collins and others you trust.</li>
+              <li><span data-icon="heart"></span> No payment. No tracking. No obligation.</li>
+            </ul>
+          </div>
+
+          <form id="respond-form" class="respond__form glass" novalidate>
+            <div class="field">
+              <label for="respond-name">Name</label>
+              <input
+                id="respond-name"
+                name="name"
+                type="text"
+                autocomplete="name"
+                maxlength="80"
+                required
+                placeholder="How you wish to be known"
+              />
+            </div>
+
+            <fieldset class="field field--roles">
+              <legend>How do you meet this work?</legend>
+              <div class="role-options" data-role-options="respond-role" data-default-role="responder"></div>
+            </fieldset>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="respond-x">X profile <span class="field__optional">optional</span></label>
+                <input
+                  id="respond-x"
+                  name="x"
+                  type="text"
+                  inputmode="url"
+                  autocomplete="url"
+                  placeholder="x.com/you"
+                />
+              </div>
+              <div class="field">
+                <label for="respond-fb">
+                  Facebook <span class="field__optional">optional</span>
+                </label>
+                <input
+                  id="respond-fb"
+                  name="facebook"
+                  type="text"
+                  inputmode="url"
+                  autocomplete="url"
+                  placeholder="facebook.com/you"
+                />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="respond-note">
+                Why you share, and where you share
+                <span class="field__optional">optional</span>
+              </label>
+              <textarea
+                id="respond-note"
+                name="note"
+                rows="3"
+                maxlength="280"
+                placeholder="Why you share, and where you share it."
+              ></textarea>
+              <p class="field__hint"><span id="respond-count">0</span> / 280</p>
+            </div>
+
+            <div class="respond__actions">
+              <button class="btn btn--primary" type="submit">
+                <span data-icon="pen"></span>
+                Seal response
+              </button>
+              <p class="form-note"><span data-icon="lock"></span> Nothing leaves until you choose.</p>
+            </div>
+          </form>
+        </div>
+
+        <div id="response-result" class="response-result glass" hidden aria-live="polite">
+          <div class="response-result__head">
+            <span class="tile" data-icon="seal" data-icon-class="icon icon--tile"></span>
+            <div>
+              <p class="eyebrow">Response sealed</p>
+              <h3>Carry it to Sir Collins</h3>
+            </div>
+          </div>
+          <p id="response-result-copy" class="response-result__copy"></p>
+          <div class="response-result__actions">
+            <button type="button" class="btn" id="response-copy">
+              <span data-icon="copy"></span> Copy link
+            </button>
+            <button type="button" class="btn" id="response-email">
+              <span data-icon="mail"></span> Email
+            </button>
+            <button type="button" class="btn" id="response-telegram">
+              <span data-icon="telegram"></span> Telegram
+            </button>
+            <button type="button" class="btn btn--ghost" id="response-clear">
+              Clear
+            </button>
+          </div>
+          <p class="form-note">
+            <span data-icon="lock"></span> The link carries only what you entered. Send it only
+            where you are comfortable.
+          </p>
+        </div>
+
+        <div id="voices" class="voices glass" hidden>
+          <div class="voices__head">
+            <h3>Responses held on this device</h3>
+            <p>Including any response imported from a carrier link.</p>
+          </div>
+          <ul id="voices-list" class="acknowledgers__list"></ul>
+        </div>
       </section>
 
       <section class="section" aria-labelledby="contact-title">
         <div class="contact glass">
-          <h2 id="contact-title">Direct contact</h2>
+          <div class="contact__head">
+            <span class="tile" data-icon="mail" data-icon-class="icon icon--tile"></span>
+            <div>
+              <p class="eyebrow">Direct contact</p>
+              <h2 id="contact-title">Write, or send a response</h2>
+            </div>
+          </div>
           <p>
-            For engagements, tutelage, or speaking, write to the professional address. Personal
-            correspondence goes to the second address.
+            For engagements, tutelage, speaking, or a response that needs a human channel, write
+            to the professional address. Personal correspondence goes to the second address.
           </p>
           <div class="contact__links">
-            <a id="contact-email" href="mailto:access1@tutamail.com">access1@tutamail.com</a>
-            <a id="contact-telegram" href="https://t.me/CollinsRoyalMedium">Telegram</a>
+            <a id="contact-email" href="mailto:access1@tutamail.com">
+              <span data-icon="mail"></span>
+              <span>access1@tutamail.com</span>
+            </a>
+            <a id="contact-telegram" href="https://t.me/CollinsRoyalMedium">
+              <span data-icon="telegram"></span>
+              <span>Telegram</span>
+            </a>
           </div>
         </div>
       </section>
+
+      <noscript>
+        <section class="section" aria-labelledby="fallback-title">
+          <h2 id="fallback-title">Inspirations &amp; Reflections</h2>
+          <blockquote>
+            The best LIFE to live is LOVE.<br />
+            The best time to love is now.<br />
+            Live your best life NOW! — Sir Collins
+          </blockquote>
+          <blockquote>It is possible to do GOOD for BAD REASONS. — Sir Collins</blockquote>
+          <blockquote>Should we be more concerned about been GOOD or been RIGHT?</blockquote>
+          <blockquote>
+            What realities can we perceive and understand with accuracy and discernment?
+          </blockquote>
+          <blockquote>What is THE TRUTH about past, recent and present realities?</blockquote>
+          <p>
+            Acknowledgment and response need JavaScript. The words above remain readable without
+            it.
+          </p>
+        </section>
+      </noscript>
     </main>
 
     <footer class="site-footer">
-      <div class="shell">
-        <p>© <span id="year">2026</span> Sir Collins Chris · sircollins.coreconcept1.net</p>
+      <div class="shell site-footer__inner">
+        <div class="site-footer__brand">
+          <img src="/brand/logo.png" alt="" width="30" height="25" decoding="async" />
+          <p>Sir Collins · sircollins.coreconcept1.net</p>
+        </div>
+        <div class="site-footer__actions">
+          <button type="button" class="footer-link" id="portal-qr">
+            <span data-icon="qr"></span>
+            <span>Carry the portal</span>
+          </button>
+          <a class="footer-link" href="#respond"><span data-icon="pen"></span><span>Respond</span></a>
+        </div>
+        <p class="site-footer__legal">
+          © <span id="year">2026</span> Sir Collins Chris · A living portal, not a scoreboard.
+        </p>
       </div>
     </footer>
+
+    <dialog id="ack-dialog" class="dialog" aria-labelledby="ack-title">
+      <div class="dialog__frame">
+        <button type="button" class="dialog__close" id="ack-close" aria-label="Close">
+          <span data-icon="close"></span>
+        </button>
+
+        <div id="ack-form-view">
+          <p class="eyebrow" id="ack-eyebrow">Add your voice</p>
+          <h2 id="ack-title">Acknowledge this work</h2>
+          <blockquote id="ack-quote" class="dialog__quote"></blockquote>
+
+          <form id="ack-form" novalidate>
+            <input type="hidden" id="ack-entry" name="entry" value="" />
+            <div class="field">
+              <label for="ack-name">Name</label>
+              <input
+                id="ack-name"
+                name="name"
+                type="text"
+                autocomplete="name"
+                maxlength="80"
+                required
+                placeholder="How you wish to be known"
+              />
+            </div>
+
+            <fieldset class="field field--roles">
+              <legend>How do you meet this work?</legend>
+              <div class="role-options" data-role-options="ack-role" data-default-role="observer"></div>
+            </fieldset>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="ack-x">X profile <span class="field__optional">optional</span></label>
+                <input
+                  id="ack-x"
+                  name="x"
+                  type="text"
+                  inputmode="url"
+                  autocomplete="url"
+                  placeholder="x.com/you"
+                />
+              </div>
+              <div class="field">
+                <label for="ack-fb">
+                  Facebook <span class="field__optional">optional</span>
+                </label>
+                <input
+                  id="ack-fb"
+                  name="facebook"
+                  type="text"
+                  inputmode="url"
+                  autocomplete="url"
+                  placeholder="facebook.com/you"
+                />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="ack-note">
+                Why you share, and where you share
+                <span class="field__optional">optional</span>
+              </label>
+              <textarea
+                id="ack-note"
+                name="note"
+                rows="3"
+                maxlength="280"
+                placeholder="Why you share, and where you share it."
+              ></textarea>
+              <p class="field__hint"><span id="ack-count">0</span> / 280</p>
+            </div>
+
+            <div class="dialog__actions">
+              <button class="btn btn--primary" type="submit">
+                <span data-icon="seal"></span>
+                Acknowledge
+              </button>
+              <button class="btn btn--ghost" type="button" id="ack-cancel">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="ack-success" hidden>
+          <div class="success-seal">
+            <span data-icon="seal" data-icon-class="icon icon--seal"></span>
+          </div>
+          <p class="eyebrow">Sealed</p>
+          <h2 id="ack-success-title">Thank you</h2>
+          <p id="ack-success-copy" class="dialog__lede"></p>
+          <div class="dialog__actions">
+            <button type="button" class="btn" id="ack-copy-link">
+              <span data-icon="copy"></span> Copy acknowledgment link
+            </button>
+            <button type="button" class="btn" id="ack-share-link">
+              <span data-icon="share"></span> Share
+            </button>
+            <button type="button" class="btn" id="ack-email-link">
+              <span data-icon="mail"></span> Email
+            </button>
+            <button type="button" class="btn btn--ghost" id="ack-done">Done</button>
+          </div>
+          <p class="form-note">
+            <span data-icon="lock"></span> Your acknowledgment stays on this device unless you
+            choose to send the link.
+          </p>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="share-dialog" class="dialog dialog--share" aria-labelledby="share-title">
+      <div class="dialog__frame">
+        <button type="button" class="dialog__close" id="share-close" aria-label="Close">
+          <span data-icon="close"></span>
+        </button>
+        <p class="eyebrow">Carry this</p>
+        <h2 id="share-title">Share</h2>
+        <p id="share-text" class="dialog__lede"></p>
+        <div class="share__qr" id="share-qr-wrap">
+          <canvas id="share-qr" width="320" height="320" aria-label="QR code for this link"></canvas>
+        </div>
+        <p id="share-url" class="share__url"></p>
+        <div class="dialog__actions">
+          <button type="button" class="btn btn--primary" id="share-copy">
+            <span data-icon="copy"></span> Copy link
+          </button>
+          <button type="button" class="btn" id="share-native">
+            <span data-icon="share"></span> Share
+          </button>
+          <button type="button" class="btn" id="share-download">
+            <span data-icon="download"></span> Save QR
+          </button>
+          <button type="button" class="btn btn--ghost" id="share-done">Done</button>
+        </div>
+        <p class="form-note">
+          <span data-icon="qr"></span> Print the code, place it on a card or a wall. It carries the
+          portal, never your private data.
+        </p>
+      </div>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite">
+      <span data-icon="check"></span>
+      <span id="toast-text"></span>
+    </div>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
