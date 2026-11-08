@@ -62,6 +62,8 @@ The app is a Trusted Web Activity: a thin shell around the live origin, verified
 Digital Asset Links, distributed through GitHub Releases, Obtainium and Uptodown — **not
 Google Play**. A web deploy reaches installed apps without a new APK.
 
+Latest release: <https://github.com/OriginLabs1/sircollins-portal/releases/latest>
+
 ```sh
 cd android
 ./gradlew assembleRelease    # signed APK in app/build/outputs/apk/release/

@@ -36,6 +36,9 @@ git push origin v0.0.2
 Latest release:
 `https://github.com/OriginLabs1/sircollins-portal/releases/latest`
 
+`v0.0.2` is published there: `sir-collins-portal.apk` (signed) and
+`sir-collins-portal.aab`.
+
 Users install by downloading the APK and allowing installs from the browser or file manager once.
 
 ### 2. Obtainium (automatic updates)
@@ -105,6 +108,15 @@ Verify after deploying:
 ```sh
 curl -s https://sircollins.coreconcept1.net/.well-known/assetlinks.json | jq .
 ```
+
+Google's own check, which is what Android consults:
+
+```sh
+curl -s "https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://sircollins.coreconcept1.net&relation=delegate_permission/common.handle_all_urls"
+```
+
+A non-empty `statements` array naming the package and fingerprint means the TWA
+will open without browser chrome.
 
 ## Versioning
 
