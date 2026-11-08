@@ -23,7 +23,7 @@ real device or in an automated test.
 | Rarity | Worth + witness; corrected public explanation |
 | Portability | Full state export/import as one JSON file |
 | PWA | Install, offline, update prompt, share target |
-| Android | TWA shell definition, asset links, signing plan |
+| Android | Bundled APK, WebView shell, deep links, signing plan |
 | Research | Local, opt-in signals with export; no SDK |
 | Docs | CONTEXT, SPECS, ALP, copy register, ADR log |
 
@@ -158,21 +158,24 @@ the reading flow, not the top nav.
 
 - Manifest: name, short name, icons (any + maskable), start URL, scope, standalone,
   theme/background, shortcuts.
-- Service worker: network-first navigation with offline shell; stale-while-revalidate for
-  same-origin assets; `CACHE_VERSION` bumped on shell change.
+- Service worker: cache-first same-origin assets with `ignoreVary`; navigation falls back to the
+  cached shell; `CACHE_VERSION` bumped on shell change.
 - Update prompt: when a new worker is waiting, show a quiet “Update available” action.
 - Install prompt: one restrained, dismissible invitation; never blocks reading.
 - **Accept:** installable on Android Chrome; offline reload works; update prompt appears after
   a version bump.
 
-### FR-12 — Android shell
+### FR-12 — Android app
 
-- TWA via Bubblewrap (or equivalent) pointing at the canonical origin.
-- Digital Asset Links published at `/.well-known/assetlinks.json`.
+- The built web portal (`dist/`) is bundled into the APK and served to a WebView from
+  `https://appassets.androidplatform.net`; no runtime network dependency.
+- The manifest declares **no `INTERNET` permission**. External links are delegated to the
+  system browser or the matching app.
+- Deep links for `https://sircollins.coreconcept1.net` (including `#ack=…` and entries) open the
+  bundled copy; `/.well-known/assetlinks.json` is published for verification.
 - Package id, signing key, and versionCode documented in the repo.
-- No WebView bundle, no duplicated content, no separate domain.
-- **Accept:** APK/AAB installs, opens without a URL bar, passes Play pre-launch checks, and
-  reflects a web deploy without an app update.
+- **Accept:** APK/AAB installs and opens on a clean device with no network and no browser
+  installed, and every portal feature works offline on first launch.
 
 ### FR-13 — Research signals (local, opt-in)
 
@@ -319,17 +322,23 @@ CONTEXT §7; log the chosen engine; never throw.
 - Offline shell includes `/`, `/index.html`, manifest, icons, emblem, stage image.
 - Cache version is part of the release checklist.
 
-### 10.2 Android (TWA)
+### 10.2 Android (bundled WebView)
 
-- Tool: Bubblewrap (or Android Studio TWA template).
-- Origin: `https://sircollins.coreconcept1.net`.
-- Asset links: `public/.well-known/assetlinks.json` with the release cert SHA-256.
-- Package: `net.coreconcept1.sircollins` (confirm before first upload).
-- Signing: upload key held by Sir Collins Tech-Agency; documented, backed up, never committed.
-- Minimum SDK: whatever Bubblewrap emits; target the current Play requirement.
-- No custom WebView, no JS bridge in `v0.1`.
+- Shell: one `Activity` hosting a `WebView`, with `WebViewAssetLoader` serving `assets/` from
+  `https://appassets.androidplatform.net`.
+- Build: `npm run build` writes `dist/`; Gradle's `syncWebAssets` copies it into the APK
+  (excluding Pages-only files such as `_headers`, `.well-known/` and `sw.js`).
+- Origin: `https://sircollins.coreconcept1.net` is claimed for deep links; asset links in
+  `public/.well-known/assetlinks.json` carry the release cert SHA-256.
+- Package: `net.coreconcept1.sircollins`; min SDK 26; target SDK 36.
+- Permissions: none for networking. Storage and sharing use platform APIs (MediaStore,
+  clipboard, `ACTION_SEND`) without extra permissions.
+- Signing: release key held by Sir Collins Tech-Agency; documented, backed up, never committed.
+- Resilience: renderer-crash recovery, readable HTML/text fallbacks, and external-link fallback
+  when no browser is installed.
 - **Upgrade path:** if a measured need appears, add a Compose Multiplatform shell that reuses
   the same JSON contracts and a shared Kotlin domain module. Do not fork the copy.
+- **Cost:** content updates ship with the APK, so releases are required. Obtainium surfaces them.
 
 ### 10.3 Notifications
 
@@ -413,18 +422,19 @@ no hard-coded strings inside render functions beyond labels already in `schema.t
 | Contract | snapshot of role labels/descriptions; grep for retired copy strings |
 | DOM | role fieldsets generated from one source; giving hint verbatim; QR hidden for carrier links |
 | Journey | first visit → voice → giving → scan → Telegram draft; acknowledge → copy link → import on second profile |
-| Platform | offline reload; install; TWA launch; asset links |
+| Platform | offline reload; install; app launch; deep links |
 | Manual | keyboard-only pass; 200% zoom; reduced motion; high contrast; 320 px width |
 
 Commands: `npm run lint`, `npm run test`, `npm run build`, `python3 tools/deploy.py --dry-run`.
 
 ## 13. Release management
 
-- **Versioning:** semver. `v0.0.2` = copy batch + giving QR + portability + TWA definition.
+- **Versioning:** semver. `v0.0.3` = bundled offline Android app + offline service worker.
 - **Changelog:** `CHANGELOG.md` (new) with Added / Changed / Fixed / Removed.
 - **Gates:** lint → test → build → dry-run → deploy → post-deploy curl checks.
 - **Rollback:** previous Cloudflare deployment id; `CACHE_VERSION` bump on every shell change.
-- **Content releases** do not require an app release; **shell releases** do.
+- **Content and shell releases** both require an app release to reach installed Android users;
+  the website still updates independently. Bump `CACHE_VERSION` for web-only shell changes.
 - **Build Again** triggers: any N1–N12 failure in production, data loss, or a privacy breach.
 
 ## 14. Risks and mitigations
@@ -432,7 +442,7 @@ Commands: `npm run lint`, `npm run test`, `npm run build`, `python3 tools/deploy
 | Risk | Likelihood | Impact | Mitigation |
 | --- | --- | --- | --- |
 | Copy drift between docs and UI | High | Medium | Copy register + grep test |
-| TWA asset-link mismatch | Medium | High | Verify with Google’s statement list tool before release |
+| Asset-link mismatch | Medium | High | Verify with Google’s statement list tool before release |
 | QR unreadable in print | Low | Medium | 640 px PNG, quiet zone, contrast check |
 | Telegram deep link ignored on desktop | Medium | Low | Always show the literal URL |
 | Feature creep into payments/AI | Medium | High | Out-of-scope list; ADR gate |

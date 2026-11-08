@@ -1,6 +1,10 @@
-# The TWA launcher is referenced from the manifest; keep its entry points.
--keep class com.google.androidbrowserhelper.** { *; }
--dontwarn com.google.androidbrowserhelper.**
+# The activity is named from the manifest, and the JavaScript bridge is looked
+# up by name from the page. Keep both, including annotated bridge methods.
+-keep class net.coreconcept1.sircollins.** { *; }
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# AndroidX FileProvider is referenced from the manifest.
--keep class androidx.core.content.FileProvider { *; }
+# androidx.webkit ships consumer rules; silence any optional references that R8
+# cannot resolve in the release variant.
+-dontwarn androidx.webkit.**

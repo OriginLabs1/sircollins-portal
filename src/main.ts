@@ -49,6 +49,7 @@ import type {
   SocialNetwork,
 } from './lib/portal.ts';
 import { downloadCanvas, paintQr } from './lib/qr.ts';
+import { isBundledApp, nativeBridge } from './lib/native.ts';
 
 const STATE_KEY = 'portal-state';
 const LEGACY_TEASERS_KEY = 'teasers';
@@ -153,7 +154,9 @@ function formatDateTime(iso: string): string {
 
 function shareOrigin(): string {
   const host = window.location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return SITE_ORIGIN;
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1' || isBundledApp()) {
+    return SITE_ORIGIN;
+  }
   return window.location.origin;
 }
 
@@ -175,6 +178,15 @@ function toast(message: string): void {
 let toastTimer: number | null = null;
 
 async function copyText(value: string): Promise<boolean> {
+  const bridge = nativeBridge();
+  if (bridge?.copyText !== undefined) {
+    try {
+      if (bridge.copyText(value)) return true;
+    } catch {
+      // Fall through to the web clipboard path.
+    }
+  }
+
   try {
     await navigator.clipboard.writeText(value);
     return true;
@@ -1010,6 +1022,14 @@ query<HTMLButtonElement>('#share-copy').addEventListener('click', () => {
 
 query<HTMLButtonElement>('#share-native').addEventListener('click', () => {
   if (shareContent === null) return;
+  const bridge = nativeBridge();
+  if (bridge?.shareText !== undefined) {
+    try {
+      if (bridge.shareText(shareContent.title, shareContent.text, shareContent.url)) return;
+    } catch {
+      // Fall through to the web share API.
+    }
+  }
   if (!('share' in navigator)) {
     void copyText(shareContent.url).then(() => toast('Link copied instead.'));
     return;
@@ -1070,6 +1090,9 @@ document.addEventListener('keydown', (event) => {
 });
 
 async function registerServiceWorker(): Promise<void> {
+  // Every asset already ships inside the APK; a worker would only add a
+  // second cache that can go stale between releases.
+  if (isBundledApp()) return;
   if (!('serviceWorker' in navigator)) return;
   try {
     await navigator.serviceWorker.register('/sw.js', { scope: '/' });

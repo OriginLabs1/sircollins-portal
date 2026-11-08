@@ -113,17 +113,19 @@ written; the export contains no device identifiers.
 **Exit gate G4:** installable on Android Chrome; offline reload passes; update prompt appears
 after a version bump; Lighthouse PWA and a11y pass.
 
-### Phase 5 — Android shell (M, ~1.5 days + store review)
+### Phase 5 — Android app (M, ~1.5 days)
 
 **Work**
 
-- Generate the TWA with Bubblewrap.
+- Bundle `dist/` into the APK via Gradle `syncWebAssets`; serve it to a WebView from
+  `https://appassets.androidplatform.net`.
 - Set package id, versionCode, signing key custody.
-- Publish asset links; verify with Google’s statement list tool.
-- Produce AAB for Play internal testing and a direct APK for private distribution.
+- Remove the `INTERNET` permission; route external links to the system browser.
+- Claim the portal origin for deep links; verify asset links with Google’s statement list tool.
+- Produce an AAB for any future store and a direct APK for private distribution.
 
-**Exit gate G5:** app installs, opens without a URL bar, survives a web deploy with no app
-update, and passes Play pre-launch checks.
+**Exit gate G5:** app installs, opens offline on a clean device with no browser installed,
+every portal feature works, and deep links open the bundled copy.
 
 ### Phase 6 — Release and verify (S, ~0.5 day)
 
@@ -172,7 +174,7 @@ A requirement is done only when all of these are true:
 | G0 | Is the copy ratified? | Stop; do not code. |
 | G2 | Does one scan reach the handshake? | Fall back to a visible URL and a copy button. |
 | G4 | Does the PWA meet the install/offline bar? | Do not ship the Android shell yet. |
-| G5 | Is the TWA stable across a web deploy? | Ship PWA only; revisit the shell. |
+| G5 | Does the bundled app work offline and install cleanly on a real device? | Ship PWA only; revisit the shell. |
 | G6 | Are all N1–N12 evidenced? | HALT; “Build Again”. |
 
 ## 8. Evidence without surveillance
@@ -191,7 +193,7 @@ This satisfies the User Research north star without betraying the privacy non-ne
 
 - **Content release:** copy or entries only; no app release; bump `CACHE_VERSION`.
 - **Shell release:** layout, logic, adapters; full gate; tag.
-- **Platform release:** TWA/versionCode; store review; asset links verified.
+- **Platform release:** bundled APK/versionCode; deep links verified; offline launch checked.
 - **Emergency:** “Build Again” protocol in `WORKFLOWS.md`.
 
 ## 10. What would justify building again
@@ -199,8 +201,8 @@ This satisfies the User Research north star without betraying the privacy non-ne
 Only these, and only with an ADR:
 
 1. A measured performance ceiling the web core cannot pass on target devices.
-2. A required native capability (background notification, native share target) that the TWA
-   cannot provide.
+2. A required native capability (background notification, native share target) that the bundled
+   WebView shell cannot provide.
 3. A privacy or data-loss defect in production.
 4. A scale of content that makes bundled JSON unworkable.
 

@@ -92,18 +92,20 @@ contracts.
 | Surface | Role | Status |
 | --- | --- | --- |
 | **Web PWA** | Canonical implementation and reference behaviour | Production (`v0.0.1`) |
-| **Android shell (TWA)** | Installable app on Android, same web core, no fork | Target for `v0.1` |
+| **Android app (bundled WebView)** | Installable app on Android, same web core, no fork, works offline | Shipped `v0.0.3` |
 | **Native surfaces (KMP/Compose)** | Optional offline reading, giving plan, notifications — only on evidence | Decision gate, not committed |
 | **Carrier links** (`#ack=…`) | Device-to-device transport of one acknowledgment | Production |
 | **Telegram** | Community and Giving Plan transport; not a data store | Production (link) |
 | **Notifications** | In-app “what's new” now; Web Push later; FCM only if a native shell earns it | Adapter |
 
-**Why TWA before Kotlin/Compose:** the ALP is already a complete web product. A Trusted Web
-Activity gives a real Android app (Play Store distributable, no WebView bundle, one codebase)
-without duplicating domain logic. A KMP/Compose rewrite is justified only by measured needs the
-web shell cannot meet — for example, background notifications, native share targets, or offline
-search over a large corpus. C/C++ enters only for a measured compute bottleneck (content
-hashing, vector search), never for architecture theatre.
+**Why a bundled WebView before Kotlin/Compose:** the ALP is already a complete web product.
+Packaging `dist/` inside a thin WebView shell gives a real, installable Android app with one
+codebase and no duplicated domain logic — and, unlike a Trusted Web Activity, it works offline
+on first launch with no browser installed and no network permission. The same web core still
+serves the website. A KMP/Compose rewrite is justified only by measured needs the web shell
+cannot meet — for example, background notifications, native share targets, or offline search
+over a large corpus. C/C++ enters only for a measured compute bottleneck (content hashing,
+vector search), never for architecture theatre.
 
 ## 7. Architecture: adapter seams
 
@@ -130,7 +132,8 @@ Rules:
 ## 8. Data posture: remote-first, portable, selectively local
 
 **Remote-first** means content and shell updates are authored centrally and delivered from the
-edge, so a copy change never requires an app-store release.
+edge, so a website copy change never requires a rebuild. The Android app bundles a snapshot of
+that build, so reaching installed apps does require a release; Obtainium makes that quiet.
 
 **Portable** means no lock-in: every personal field can leave as one JSON file or one carrier
 link, and the same payload works on any device.
@@ -294,7 +297,7 @@ the trade-off.
 | ID | Decision | Rationale |
 | --- | --- | --- |
 | ADR-001 | The web core is canonical; native shells are clients. | One source of truth; avoids a fork. |
-| ADR-002 | Android ships as a TWA first; KMP/Compose only on evidence. | Real app, no duplicated domain logic, smallest sustainable surface. |
+| ADR-002 | Android bundles the web core in a WebView rather than a TWA; KMP/Compose only on evidence. | Works offline on first launch with no browser or network; no duplicated domain logic; smallest sustainable surface. |
 | ADR-003 | No server-side personal data in `v0.0.x`. | Sovereignty is the product, not a setting. |
 | ADR-004 | Telegram is the giving and community transport; the portal is the record. | Uses an existing, trusted channel; no forum to maintain. |
 | ADR-005 | QR codes are generated on-device from canonical URLs. | Offline, crisp, themeable, no third-party dependency. |

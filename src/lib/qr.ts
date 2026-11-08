@@ -8,6 +8,7 @@
  */
 
 import qrcodegen from '../vendor/qrcodegen.ts';
+import { nativeBridge } from './native.ts';
 
 interface QrLike {
   readonly size: number;
@@ -72,7 +73,16 @@ export function paintQr(canvas: HTMLCanvasElement, text: string, options: PaintO
   return pixels;
 }
 
-export function downloadCanvas(canvas: HTMLCanvasElement, fileName: string): void {
+export function downloadCanvas(canvas: HTMLCanvasElement, fileName: string): boolean {
+  const bridge = nativeBridge();
+  if (bridge !== undefined) {
+    try {
+      if (bridge.saveImage(canvas.toDataURL('image/png'), fileName)) return true;
+    } catch {
+      // Fall through to the browser download path.
+    }
+  }
+
   canvas.toBlob((blob) => {
     if (blob === null) return;
     const url = URL.createObjectURL(blob);
@@ -82,4 +92,5 @@ export function downloadCanvas(canvas: HTMLCanvasElement, fileName: string): voi
     anchor.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 2_000);
   }, 'image/png');
+  return true;
 }

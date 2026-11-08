@@ -21,7 +21,7 @@ Read these before changing anything:
 
 ## Current state
 
-Version `0.0.2` — the living portal, plus an Android app. Implemented:
+Version `0.0.3` — the living portal, plus a fully offline Android app. Implemented:
 
 - Strict TypeScript + Vite build (no framework, no runtime dependencies).
 - **Emblem-led hero** (`public/brand/logo.png`) above the verbatim hero copy; the portrait was
@@ -47,8 +47,8 @@ Version `0.0.2` — the living portal, plus an Android app. Implemented:
   probed at runtime, never throws.
 - **JSON-LD** (`src/lib/schema.ts`): Person, WebSite and CollectionPage (Quotation/Question)
   generated from one source, injected at boot.
-- **Service worker** (`public/sw.js`): network-first navigation with offline shell fallback,
-  stale-while-revalidate for same-origin assets.
+- **Service worker** (`public/sw.js`): cache-first same-origin assets with `ignoreVary`, plus
+  the navigation offline fallback, so a reload works with the network disabled.
 - **Tests** (`tests/`): storage fallback chain, corrupt-payload recovery, JSON-LD shape,
   carrier round-trips, role weights, rarity tiers.
 
@@ -58,13 +58,18 @@ server-side store).
 
 ## Android app
 
-The app is a Trusted Web Activity: a thin shell around the live origin, verified through
-Digital Asset Links, distributed through GitHub Releases, Obtainium and Uptodown — **not
-Google Play**. A web deploy reaches installed apps without a new APK.
+The portal is **bundled into the APK**, not loaded from the network. `npm run build` writes
+`dist/`; Gradle copies it into the app's assets and a WebView serves it from
+`https://appassets.androidplatform.net`. The app declares **no `INTERNET` permission**:
+everything works on first launch, in airplane mode, and without an installed browser. External
+links open in the system browser, and portal links (`#ack=…`, entries) open the bundled copy.
+
+Distributed through GitHub Releases, Obtainium and Uptodown — **not Google Play**.
 
 Latest release: <https://github.com/OriginLabs1/sircollins-portal/releases/latest>
 
 ```sh
+npm run build
 cd android
 ./gradlew assembleRelease    # signed APK in app/build/outputs/apk/release/
 ```

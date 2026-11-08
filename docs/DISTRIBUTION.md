@@ -1,16 +1,22 @@
 # DISTRIBUTION — Android, without Google Play
 
-The web portal at `https://sircollins.coreconcept1.net` is the product. The Android app is a
-**Trusted Web Activity (TWA)**: a thin shell that opens the live origin in the user's own browser
-engine after verifying the site through Digital Asset Links.
+The web portal at `https://sircollins.coreconcept1.net` is the product. The Android app is the
+same portal **compiled into the APK**: `npm run build` writes `dist/`, Gradle copies it into
+`assets/`, and a WebView serves it from the private origin
+`https://appassets.androidplatform.net`. Nothing is fetched over the network.
 
 That choice is deliberate:
 
-- One source of truth. A web deploy reaches every installed app immediately; no store review,
-  no rebuild, no version skew.
+- The app works on first launch, in airplane mode, and with no browser installed. The live
+  origin is not a runtime dependency.
+- Every feature is native to the APK: entries, acknowledgment import (`#ack=…`), the Giving QR,
+  clipboard, sharing and image saving all run locally.
 - No Google Play account, policy surface, or 30% cut. Distribution is direct.
-- The APK stays small (no bundled web assets) and the app inherits Chrome's rendering,
-  password manager, and security updates.
+- The app holds **no `INTERNET` permission**; external links (Telegram, GitHub, mail, social)
+  are handed to the system browser or the matching app. The permission list is the guarantee.
+
+The cost of bundling is that content changes require a new release. That is accepted: releases
+are automatic and Obtainium surfaces them.
 
 ## Artifacts
 
@@ -26,18 +32,20 @@ Package id: `net.coreconcept1.sircollins` · min SDK 26 (Android 8.0) · target 
 ### 1. GitHub Releases (source of truth)
 
 Every `v*` tag builds and publishes a signed APK through
-[`.github/workflows/android.yml`](../.github/workflows/android.yml).
+[`.github/workflows/android.yml`](../.github/workflows/android.yml). The workflow runs
+`npm ci && npm run build` first, then Gradle packages `dist/` into the APK.
 
 ```sh
-git tag v0.0.2
-git push origin v0.0.2
+git tag v0.0.3
+git push origin v0.0.3
 ```
 
 Latest release:
 `https://github.com/OriginLabs1/sircollins-portal/releases/latest`
 
-`v0.0.2` is published there: `sir-collins-portal.apk` (signed) and
-`sir-collins-portal.aab`.
+`v0.0.2` (the old TWA shell) is published there. `v0.0.3` is the first build with the portal
+bundled inside; it keeps the same package id and signing key, so it installs straight over
+`v0.0.2` without uninstalling.
 
 Users install by downloading the APK and allowing installs from the browser or file manager once.
 
@@ -91,17 +99,20 @@ For CI, store the same material as repository secrets:
 | `ANDROID_KEYSTORE_PASSWORD` | store password |
 | `ANDROID_KEY_ALIAS` | `sircollins` |
 
-## Digital Asset Links
+## Deep links and Asset Links
 
-The TWA only drops the browser address bar when the origin vouches for the app:
+The app claims `https://sircollins.coreconcept1.net` so that a carrier link
+(`https://sircollins.coreconcept1.net/#ack=…`) or a link to an entry opens the
+**bundled** copy instead of a web page. Android verifies that claim through Digital Asset
+Links:
 
 - `public/.well-known/assetlinks.json` — served at
   `https://sircollins.coreconcept1.net/.well-known/assetlinks.json`
-- `android/app/src/main/res/values/strings.xml` → `asset_statements` — the same statement,
-  compiled into the APK
+- `android/app/src/main/AndroidManifest.xml` — the `autoVerify` intent filter for the host
 
 Both must name the same package and the same SHA-256 fingerprint. **If the signing key changes,
-update both files and rebuild.** A mismatch leaves the app running with browser chrome visible.
+update both files and rebuild.** A mismatch only disables link verification: the app still
+opens normally, but taps on portal links may go to the browser first.
 
 Verify after deploying:
 
@@ -115,8 +126,8 @@ Google's own check, which is what Android consults:
 curl -s "https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://sircollins.coreconcept1.net&relation=delegate_permission/common.handle_all_urls"
 ```
 
-A non-empty `statements` array naming the package and fingerprint means the TWA
-will open without browser chrome.
+A non-empty `statements` array naming the package and fingerprint means Android will hand the
+portal's URLs to the app.
 
 ## Versioning
 
@@ -127,18 +138,23 @@ will open without browser chrome.
 | --- | --- |
 | `android/app/build.gradle.kts` | `versionCode`, `versionName` |
 | `package.json` | `version` |
-| `public/sw.js` | `CACHE_VERSION` (bump when the shell changes) |
+| `public/sw.js` | `CACHE_VERSION` (bump when the web shell changes) |
 
-A copy-only web change needs no APK release at all — installed apps pick it up on next open.
+Because the portal is bundled, a content or feature change needs a **new APK release** to reach
+installed users. The service worker only governs the website in a browser; the app does not use
+it.
 
 ## Building locally
 
-The build needs JDK 17+ and the Android SDK (`platforms;android-36`, `build-tools;36.0.0`).
+The build needs Node 22+, JDK 17+ and the Android SDK (`platforms;android-36`,
+`build-tools;36.0.0`).
 
 ```sh
+npm ci
+npm run build                  # writes dist/
 cd android
 echo "sdk.dir=$ANDROID_HOME" > local.properties
-./gradlew assembleRelease
+./gradlew assembleRelease      # copies dist/ into assets/, then packages the APK
 ```
 
 Output: `android/app/build/outputs/apk/release/app-release.apk`.
