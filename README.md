@@ -10,14 +10,18 @@ Read these before changing anything:
 
 | File | Contents |
 | --- | --- |
-| `CONTEXT.md` | Mission, architectural pillars, acceptance criteria, contact channels |
+| `CONTEXT.md` | Mission, thesis, north star, non-negotiables, architecture seams, data posture |
+| `SPECS.md` | Requirements, contracts, platform specs, test plan, release management |
+| `ALP.md` | Average Lovable Product plan: journeys, phases, gates, definition of done |
+| `docs/COPY-DECISIONS.md` | Exact `v0.0.2` copy changes, flags, retired strings |
+| `docs/DISTRIBUTION.md` | Android app, GitHub Releases, Obtainium, Uptodown, signing custody |
 | `SKILLS.md` | Agent competency matrix and communication protocol |
 | `TOOLS.md` | Approved libraries and integrations |
 | `WORKFLOWS.md` | SOPs: feature, review, deploy, content, "Build Again" |
 
 ## Current state
 
-Version `0.0.1` — the living portal. Implemented:
+Version `0.0.2` — the living portal, plus an Android app. Implemented:
 
 - Strict TypeScript + Vite build (no framework, no runtime dependencies).
 - **Emblem-led hero** (`public/brand/logo.png`) above the verbatim hero copy; the portrait was
@@ -27,9 +31,10 @@ Version `0.0.1` — the living portal. Implemented:
 - **Unique Skills** and **Creative Expressions**: ten capability tiles plus links to the
   creative work; `Person.knowsAbout` is derived from the same titles.
 - **Unique Concepts**: Ceremoni, Royal Discipleship and Super Birthdays, with the reality hint.
-- **From the Stage**: the TEDx Jalingo slide (`public/media/tedx-jalingo.jpg`) framed with its
-  quote, attribution and context, linked to the full-size file; the image is cached by the
-  service worker.
+- **The Voice**: the TEDx Jalingo slide (`public/media/tedx-jalingo.jpg`) framed with its
+  quote, the living-inspiration credit block, the role context, and “My impact was not on
+  stage. My impact was behind the stage.” — linked to the full-size file; the image is cached
+  by the service worker.
 - **Inspirations & Reflections** (`src/data/entries.json`): five verbatim entries, each with
   Love, Acknowledge, Share, “Acknowledged by” and a qualitative rarity symbol (hover/focus
   for the breakdown).
@@ -50,6 +55,20 @@ Version `0.0.1` — the living portal. Implemented:
 Not yet built: the Private AI Agent interaction layer, `sqlite-vec` semantic search,
 CBOR-LD encoding, the payment adapter, and globally aggregated acknowledgments (which need a
 server-side store).
+
+## Android app
+
+The app is a Trusted Web Activity: a thin shell around the live origin, verified through
+Digital Asset Links, distributed through GitHub Releases, Obtainium and Uptodown — **not
+Google Play**. A web deploy reaches installed apps without a new APK.
+
+```sh
+cd android
+./gradlew assembleRelease    # signed APK in app/build/outputs/apk/release/
+```
+
+See [`docs/DISTRIBUTION.md`](docs/DISTRIBUTION.md) for the release workflow, signing-key
+custody and update channels.
 
 ## Commands
 

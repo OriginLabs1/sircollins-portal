@@ -115,7 +115,7 @@ export interface Rarity {
 }
 
 export const RARITY_SCALE_NOTE =
-  'Rarity measures depth of witness, not worth, popularity, or money. Curation sets the floor; acknowledgment raises it.';
+  'Rarity measures both depth of witness and worth, not popularity or money.';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -431,7 +431,7 @@ export function tierFor(score: number): RarityTier {
 }
 
 export function rarityBreakdown(rarity: Rarity): readonly { label: string; value: string }[] {
-  const rows = [{ label: 'Curation', value: `+${rarity.intrinsic}` }];
+  const rows = [{ label: 'Worth (curation)', value: `+${rarity.intrinsic}` }];
   for (const role of ACK_ROLES) {
     rows.push({
       label: `${ACK_ROLE_PLURAL[role]} · ${rarity.counts[role]}`,

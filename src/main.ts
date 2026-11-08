@@ -11,6 +11,7 @@ import {
   ACK_ROLE_LABEL,
   ACK_ROLES,
   CONTACT,
+  GIVING_HANDSHAKE,
   ROLES,
   SITE_NAME,
   SITE_ORIGIN,
@@ -613,6 +614,8 @@ function openShare(content: ShareContent): void {
 
 /* ------------------------------------------------------------ token/giving */
 
+let givingQrPainted = false;
+
 function applyReceptive(): void {
   const active = state.receptive;
   document.documentElement.dataset['receptive'] = String(active);
@@ -624,6 +627,24 @@ function applyReceptive(): void {
     ? 'Open · Token/Giving Mode is active on this device.'
     : 'Closed · open the door when you are ready.';
   query<HTMLElement>('#receptive-badge').hidden = !active;
+
+  const handshake = query<HTMLDivElement>('#receptive-handshake');
+  handshake.hidden = !active;
+  const telegram = query<HTMLAnchorElement>('#giving-telegram');
+  telegram.href = GIVING_HANDSHAKE;
+  query<HTMLElement>('#giving-url').textContent = GIVING_HANDSHAKE;
+
+  if (active && !givingQrPainted) {
+    const qrWrap = query<HTMLDivElement>('.receptive__qr');
+    qrWrap.hidden = false;
+    try {
+      paintQr(query<HTMLCanvasElement>('#giving-qr'), GIVING_HANDSHAKE, { pixels: 640 });
+      givingQrPainted = true;
+    } catch {
+      // A missing encoder must not hide the written handshake.
+      qrWrap.hidden = true;
+    }
+  }
 }
 
 /* ------------------------------------------------------------------- boot */
@@ -1017,6 +1038,11 @@ query<HTMLButtonElement>('#portal-qr').addEventListener('click', () => {
     url: `${shareOrigin()}/`,
     qr: true,
   });
+});
+
+query<HTMLButtonElement>('#giving-download').addEventListener('click', () => {
+  downloadCanvas(query<HTMLCanvasElement>('#giving-qr'), 'sir-collins-giving-plan-qr.png');
+  toast('Giving QR saved.');
 });
 
 for (const node of document.querySelectorAll<HTMLDialogElement>('dialog')) {

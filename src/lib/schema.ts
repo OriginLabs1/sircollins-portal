@@ -27,6 +27,25 @@ export const CONTACT = {
   telegram: 'https://t.me/CollinsRoyalMedium',
 } as const;
 
+/**
+ * The Giving Plan handshake. One word, sent to the Telegram inbox, opens the
+ * conversation. The QR in the Token/Giving panel carries this exact URL so a
+ * scan lands in Telegram with the word already typed.
+ */
+export const GIVING_MESSAGE = 'Giver';
+
+export const GIVING_HANDSHAKE = `${CONTACT.telegram}?text=${encodeURIComponent(GIVING_MESSAGE)}`;
+
+/**
+ * Attribution is a product surface, not a footnote. These strings are rendered
+ * verbatim in the footer and must stay in sync with `index.html`.
+ */
+export const ATTRIBUTION = {
+  madeWithLove: 'Made with love from OneOrigin.',
+  poweredBy:
+    "Powered by: 'Sir Collins Tech-Agency' - A leading universal entity pioneering unique concepts beyond tech and shaping the future of sustainable civilization with integrity and mastery.",
+} as const;
+
 export const ROLES = [
   'Unique Pioneer',
   'Leadership Consultant',
@@ -55,16 +74,17 @@ export const ACK_ROLE_LABEL: Record<AckRole, string> = {
   observer: 'Observer',
   aspirant: 'Membership Aspirant',
   communicator: 'Communicator',
-  'active-member': 'Community Active Member',
+  'active-member': 'Active Member',
   responder: 'Responder',
 };
 
 export const ACK_ROLE_DESCRIPTION: Record<AckRole, string> = {
-  observer: 'I have read and held this.',
-  aspirant: 'A potential member who is willing to be recognized as a honorable member of Sir Collins Community.',
-  communicator: 'I have shared or spoken this.',
+  observer: 'I read and observed.',
+  aspirant: 'A potential member willing to be a recognized member of Sir Collins Community.',
+  communicator: 'I spoke or reshared this.',
+  // "A honorable" is Sir Collins's exact wording; kept verbatim by instruction.
   'active-member': 'A honorable member active within Sir Collins Community.',
-  responder: 'I have acted on this or created from it.',
+  responder: 'I acted on this or created from it.',
 };
 
 export const ACK_ROLE_ICON: Record<

@@ -6,7 +6,7 @@
     <title>Sir Collins — The Living Portal</title>
     <meta
       name="description"
-      content="The living portal of the Life and unique realities of Sir Collins — featured inspirations, reflections, acknowledgment, and a community of witness."
+      content="The living portal of the Life and unique realities of Sir Collins — inspirations, reflections, acknowledgment, and a community of witness."
     />
     <meta name="theme-color" content="#05060f" />
     <meta name="color-scheme" content="dark" />
@@ -307,8 +307,7 @@
           <div class="section__title">
             <span class="tile" data-icon="mic" data-icon-class="icon icon--tile"></span>
             <div>
-              <p class="eyebrow">On stage</p>
-              <h2 id="stage-title">From the Stage</h2>
+              <h2 id="stage-title">The Voice</h2>
             </div>
           </div>
           <p class="section__note">TEDx Jalingo · A New Wave</p>
@@ -340,12 +339,19 @@
               “A changed mind is a changed life; A changed life can change lives.”
             </blockquote>
             <p class="stage__credit">Collins Chris</p>
-            <p class="stage__note">
-              The slide as it appeared on the TEDx Jalingo stage, from the talk
-              <em>A New Wave</em>.
-            </p>
+            <div class="stage__meta">
+              <p>A living Inspiration by Sir Collins</p>
+              <p>Occasion: TEDx Jalingo</p>
+              <p>Theme: 'A New Wave'</p>
+              <p>Role: Strategist &amp; Creative Facilitator</p>
+              <p>Role Context: Former active member of the first TEDx Organizers, Jalingo.</p>
+            </div>
+            <blockquote class="stage__impact">
+              <p>My impact was not on stage.</p>
+              <p>My impact was behind the stage.</p>
+            </blockquote>
             <ul class="stage__promises">
-              <li><span data-icon="check"></span> Verifiable stage work</li>
+              <li><span data-icon="check"></span> First TEDx Jalingo organizers</li>
               <li><span data-icon="check"></span> A thought held in public</li>
             </ul>
           </figcaption>
@@ -382,6 +388,40 @@
           Sir Collins and his community network are open and receptive to the right people and the
           right resources or gifts from those who love and trust our uniqueness
         </blockquote>
+        <p id="receptive-hint" class="receptive__hint">
+          HINT: Toggling the Token/Giving Mode or turning it on simply means choosing to give or
+          choosing to request for a 'Giving Plan' by typing 'Giver' to Sir Collins Telegram inbox.
+        </p>
+        <div class="receptive__handshake" id="receptive-handshake" hidden>
+          <div class="receptive__qr">
+            <canvas
+              id="giving-qr"
+              width="320"
+              height="320"
+              aria-label="QR code for the Giving Plan handshake"
+            ></canvas>
+          </div>
+          <div class="receptive__handshake-copy">
+            <p class="receptive__handshake-lede">
+              Scan with a phone, or open Telegram with the word ready to send.
+            </p>
+            <div class="receptive__handshake-actions">
+              <a
+                class="btn btn--primary"
+                id="giving-telegram"
+                href="https://t.me/CollinsRoyalMedium?text=Giver"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span data-icon="telegram"></span> Open Telegram
+              </a>
+              <button type="button" class="btn" id="giving-download">
+                <span data-icon="download"></span> Save QR
+              </button>
+            </div>
+            <code class="receptive__handshake-url" id="giving-url">https://t.me/CollinsRoyalMedium?text=Giver</code>
+          </div>
+        </div>
         <p class="receptive__status" id="receptive-status">
           Closed · open the door when you are ready.
         </p>
@@ -392,8 +432,7 @@
           <div class="section__title">
             <span class="tile" data-icon="spark" data-icon-class="icon icon--tile"></span>
             <div>
-              <p class="eyebrow">Aphorisms to live by</p>
-              <h2 id="inspirations-title">Featured Inspirations</h2>
+              <h2 id="inspirations-title">Inspirations</h2>
             </div>
           </div>
           <p class="section__note">Held as first principles, carried by those who acknowledge them.</p>
@@ -423,11 +462,13 @@
         </summary>
         <div class="legend__body">
           <div id="rarity-tiers" class="legend__tiers" aria-label="Rarity scale"></div>
-          <p id="rarity-note" class="legend__note"></p>
+          <p id="rarity-note" class="legend__note">
+            Rarity measures both depth of witness and worth, not popularity or money.
+          </p>
           <p class="legend__detail">
-            Observers weigh 1, Communicators 2, Responders 3. Curation sets the floor. Hover or
-            focus a rarity symbol on any card to see its exact breakdown. Nothing here is for
-            sale, and no raw count is displayed on the surface.
+            Observers 1 · Membership Aspirants 1 · Communicators 2 · Active Members 2 · Responders
+            3. Worth sets the floor; witness raises it. Nothing here is for sale, and no raw count
+            appears on the surface.
           </p>
         </div>
       </details>
@@ -630,10 +671,26 @@
             <span data-icon="qr"></span>
             <span>Carry the portal</span>
           </button>
+          <a
+            class="footer-link"
+            href="https://github.com/OriginLabs1/sircollins-portal/releases/latest"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span data-icon="download"></span><span>Get the app</span>
+          </a>
           <a class="footer-link" href="#respond"><span data-icon="pen"></span><span>Respond</span></a>
           <a class="footer-link" href="mailto:sircollins1@protonmail.com">
             <span data-icon="mail"></span><span>sircollins1@protonmail.com</span>
           </a>
+        </div>
+        <div class="site-footer__attribution">
+          <p>Made with love from OneOrigin.</p>
+          <p>
+            Powered by: 'Sir Collins Tech-Agency' - A leading universal entity pioneering unique
+            concepts beyond tech and shaping the future of sustainable civilization with integrity
+            and mastery.
+          </p>
         </div>
         <p class="site-footer__legal">
           © <span id="year">2026</span> Sir Collins Chris · A living portal, not a scoreboard.
