@@ -1,0 +1,16 @@
+# Paths are relative to this directory (android/).
+
+# Build outputs
+app/build/
+build/
+.gradle/
+.kotlin/
+
+# Local machine paths
+local.properties
+
+# Signing material — never commit, never print. Back up offline.
+keystore.properties
+keystore/
+*.jks
+*.keystore

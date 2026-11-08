@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SirCollins" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/brand_night</item>
+        <item name="android:statusBarColor">@color/brand_night</item>
+        <item name="android:navigationBarColor">@color/brand_night</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+
+    <style name="Theme.SirCollins.Splash" parent="Theme.SirCollins">
+        <item name="android:windowBackground">@color/brand_night</item>
+    </style>
+</resources>

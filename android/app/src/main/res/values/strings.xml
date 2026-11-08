@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sir Collins Portal</string>
+    <string name="launch_url" translatable="false">https://sircollins.coreconcept1.net/</string>
+
+    <!-- Compiled-in copy of public/.well-known/assetlinks.json.
+         If the signing key changes, update both files together. -->
+    <string name="asset_statements" translatable="false">[{\"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": {\"namespace\": \"android_app\", \"package_name\": \"net.coreconcept1.sircollins\", \"sha256_cert_fingerprints\": [\"D9:34:89:15:59:C6:91:72:AB:5D:E5:42:F1:07:D4:AB:ED:BF:1A:10:08:49:8D:01:7C:57:D9:63:5D:57:7D:F2\"]}}]</string>
+</resources>
