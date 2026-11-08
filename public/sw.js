@@ -11,7 +11,7 @@
  *
  * Bump CACHE_VERSION on every deploy that changes the shell.
  */
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const SHELL_CACHE = `sircollins-shell-${CACHE_VERSION}`;
 const SHELL_ASSETS = [
   '/',

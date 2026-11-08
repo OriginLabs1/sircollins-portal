@@ -36,16 +36,16 @@ Every `v*` tag builds and publishes a signed APK through
 `npm ci && npm run build` first, then Gradle packages `dist/` into the APK.
 
 ```sh
-git tag v0.0.3
-git push origin v0.0.3
+git tag v0.0.4
+git push origin v0.0.4
 ```
 
 Latest release:
 `https://github.com/OriginLabs1/sircollins-portal/releases/latest`
 
-`v0.0.2` (the old TWA shell) is published there. `v0.0.3` is the first build with the portal
-bundled inside; it keeps the same package id and signing key, so it installs straight over
-`v0.0.2` without uninstalling.
+`v0.0.2` (the old TWA shell) and `v0.0.3` (the first bundled build) are published there.
+`v0.0.4` adds the five-screen mobile app shell and the refreshed palette; it keeps the same
+package id and signing key, so it installs straight over earlier releases without uninstalling.
 
 Users install by downloading the APK and allowing installs from the browser or file manager once.
 

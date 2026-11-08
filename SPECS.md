@@ -429,7 +429,8 @@ Commands: `npm run lint`, `npm run test`, `npm run build`, `python3 tools/deploy
 
 ## 13. Release management
 
-- **Versioning:** semver. `v0.0.3` = bundled offline Android app + offline service worker.
+- **Versioning:** semver. `v0.0.4` = five-screen mobile app shell + refreshed palette, bundled
+  offline Android app and offline service worker.
 - **Changelog:** `CHANGELOG.md` (new) with Added / Changed / Fixed / Removed.
 - **Gates:** lint → test → build → dry-run → deploy → post-deploy curl checks.
 - **Rollback:** previous Cloudflare deployment id; `CACHE_VERSION` bump on every shell change.

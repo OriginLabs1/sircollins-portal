@@ -21,9 +21,15 @@ Read these before changing anything:
 
 ## Current state
 
-Version `0.0.3` — the living portal, plus a fully offline Android app. Implemented:
+Version `0.0.4` — the living portal with a five-screen mobile app shell, plus a fully offline
+Android app. Implemented:
 
 - Strict TypeScript + Vite build (no framework, no runtime dependencies).
+- **Mobile app shell**: Home, Realities, Words, Giving and Respond as one-screen views with a
+  fixed bottom rail on narrow viewports and in the Android app; the desktop keeps the long-form
+  page. Deep links, words filtering and the carrier still work across both surfaces.
+- **Steel-blue palette**: accents derived from the emblem, with selective teal, violet and rose
+  states; gold is no longer used for interface chrome.
 - **Emblem-led hero** (`public/brand/logo.png`) above the verbatim hero copy; the portrait was
   removed by instruction.
 - **Liquid Glass** base styles: aurora field, single-layer `backdrop-filter`, spring

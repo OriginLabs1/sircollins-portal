@@ -14,7 +14,7 @@ name: Android
 #   ANDROID_KEYSTORE_PASSWORD store password (also used as key password)
 #   ANDROID_KEY_ALIAS         key alias, e.g. sircollins
 #
-# Create a release by pushing a tag: git tag v0.0.3 && git push origin v0.0.3
+# Create a release by pushing a tag: git tag v0.0.4 && git push origin v0.0.4
 
 on:
   push:
