@@ -73,6 +73,15 @@ describe('giving handshake', () => {
   });
 });
 
+describe('APK distribution', () => {
+  it('offers the APK Format download in the footer and on home', () => {
+    expect(page).toContain(
+      'https://github.com/OriginLabs1/sircollins-portal/releases/latest/download/sir-collins-portal.apk',
+    );
+    expect(page.match(/APK Format/g)).toHaveLength(2);
+  });
+});
+
 describe('attribution', () => {
   it('is visible in the app, word for word', () => {
     expect(ATTRIBUTION.madeWithLove).toBe('Made with love from OneOrigin.');

@@ -2452,6 +2452,15 @@ main {
   height: 0.85rem;
 }
 
+.footer-link__version {
+  padding-left: 0.38rem;
+  border-left: 1px solid var(--hairline);
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+}
+
 .footer-link:hover {
   color: var(--ink);
   border-color: var(--hairline-strong);

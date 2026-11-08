@@ -77,8 +77,9 @@ Release exists so both carry the same build.
 
 ### 4. Direct link
 
-The footer's **Get the app** action points at the GitHub `releases/latest` page, which always
-resolves to the newest signed APK.
+The footer's **APK Format** action and the home “Open a channel” card point at the GitHub
+`releases/latest/download/sir-collins-portal.apk` asset, which always resolves to the newest
+signed APK.
 
 ## Signing and custody
 

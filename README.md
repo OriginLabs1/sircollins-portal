@@ -4,6 +4,8 @@ Sovereign Digital Twin of **Sir Collins Chris** — an offline-first, machine-re
 
 Target domain: `sircollins.coreconcept1.net` · Cloudflare Pages project: `sircollins-pwa`
 
+[![APK Format — download v0.0.4](https://img.shields.io/badge/APK_Format-v0.0.4-9EC1E6?logo=android&logoColor=white&style=for-the-badge)](https://github.com/OriginLabs1/sircollins-portal/releases/latest/download/sir-collins-portal.apk)
+
 ## Governance documents
 
 Read these before changing anything:
@@ -71,6 +73,8 @@ everything works on first launch, in airplane mode, and without an installed bro
 links open in the system browser, and portal links (`#ack=…`, entries) open the bundled copy.
 
 Distributed through GitHub Releases, Obtainium and Uptodown — **not Google Play**.
+
+**APK Format:** [download the Android app (v0.0.4)](https://github.com/OriginLabs1/sircollins-portal/releases/latest/download/sir-collins-portal.apk) — signed, offline-first, no Google Play account.
 
 Latest release: <https://github.com/OriginLabs1/sircollins-portal/releases/latest>
 
