@@ -89,6 +89,8 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: gradle-${{ hashFiles('android/**/*.gradle.kts', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-
 
       - name: Build signed APK and bundle
         run: ./gradlew assembleRelease bundleRelease --no-daemon
