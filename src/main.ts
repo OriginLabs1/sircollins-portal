@@ -659,6 +659,172 @@ function applyReceptive(): void {
   }
 }
 
+/* ------------------------------------------------------------------ surface */
+
+type Screen = 'home' | 'work' | 'words' | 'give' | 'respond';
+type WordsKind = 'inspirations' | 'reflections';
+
+const SCREEN_HASH: Readonly<Record<string, Screen>> = {
+  home: 'home',
+  main: 'home',
+  realities: 'work',
+  skills: 'work',
+  'skills-title': 'work',
+  'creative-title': 'work',
+  concepts: 'work',
+  'concepts-title': 'work',
+  stage: 'work',
+  'stage-title': 'work',
+  'stage-more': 'work',
+  inspirations: 'words',
+  'inspirations-title': 'words',
+  reflections: 'words',
+  'reflections-title': 'words',
+  rarity: 'words',
+  receptive: 'give',
+  'receptive-title': 'give',
+  respond: 'respond',
+  'respond-title': 'respond',
+  voices: 'respond',
+  'contact-title': 'respond',
+};
+
+const mobileQuery = window.matchMedia('(max-width: 48rem)');
+
+/** True when the five-screen app surface should replace the long page. */
+function isMobileSurface(): boolean {
+  return isBundledApp() || mobileQuery.matches;
+}
+
+function hashKey(hash: string): string {
+  return hash.replace(/^#/, '');
+}
+
+function screenForHash(hash: string): Screen {
+  if (hash.startsWith('#entry-')) return 'words';
+  if (hash.startsWith('#ack=')) return 'home';
+  return SCREEN_HASH[hashKey(hash)] ?? 'home';
+}
+
+function wordsForHash(hash: string): WordsKind | null {
+  const key = hashKey(hash);
+  if (key === 'reflections' || key === 'reflections-title' || key === 'reflection-grid') {
+    return 'reflections';
+  }
+  if (key === 'inspirations' || key === 'inspirations-title' || key === 'inspiration-grid') {
+    return 'inspirations';
+  }
+  if (key.startsWith('entry-')) {
+    const id = key.slice('entry-'.length);
+    const entry = entries.find((item) => item.id === id);
+    if (entry !== undefined) {
+      return entry.kind === 'reflection' ? 'reflections' : 'inspirations';
+    }
+  }
+  return null;
+}
+
+function setWords(kind: WordsKind, replaceHash = false): void {
+  document.documentElement.dataset['words'] = kind;
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-words-btn]')) {
+    button.setAttribute('aria-pressed', String(button.dataset['wordsBtn'] === kind));
+  }
+  if (!replaceHash || !isMobileSurface()) return;
+  const hash = kind === 'reflections' ? '#reflections' : '#inspirations';
+  if (window.location.hash !== hash) {
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}${hash}`);
+  }
+}
+
+function showScreen(screen: Screen, scroll = true): void {
+  if (!isMobileSurface()) return;
+  document.documentElement.dataset['screen'] = screen;
+  for (const node of document.querySelectorAll<HTMLElement>('.app-screen')) {
+    const active = node.dataset['screen'] === screen;
+    node.classList.toggle('is-active', active);
+    if (active) node.removeAttribute('aria-hidden');
+    else node.setAttribute('aria-hidden', 'true');
+  }
+  for (const item of document.querySelectorAll<HTMLAnchorElement>('.app-nav__item')) {
+    if (item.dataset['screenLink'] === screen) item.setAttribute('aria-current', 'page');
+    else item.removeAttribute('aria-current');
+  }
+  if (scroll) window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+function revealTarget(hash: string): void {
+  if (hash === '' || hash === '#' || hash.startsWith('#ack=')) return;
+  const id = hashKey(hash);
+  if (id.startsWith('entry-')) {
+    scrollToEntry(id.slice('entry-'.length));
+    return;
+  }
+  const target = document.getElementById(id);
+  if (target === null) return;
+  target.scrollIntoView({
+    behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+    block: 'start',
+  });
+}
+
+function navigate(hash: string, reveal = true): void {
+  if (window.location.hash !== hash) {
+    window.history.pushState(null, '', hash);
+  }
+  const words = wordsForHash(hash);
+  if (words !== null) setWords(words);
+  showScreen(screenForHash(hash));
+  if (reveal) window.setTimeout(() => revealTarget(hash), 40);
+}
+
+function applySurface(): void {
+  const mobile = isMobileSurface();
+  const root = document.documentElement;
+  root.dataset['mobileApp'] = String(mobile);
+
+  for (const node of document.querySelectorAll<HTMLDetailsElement>(
+    '.stage__more, .concept__hint, .form-more',
+  )) {
+    node.open = !mobile;
+  }
+
+  if (mobile) {
+    const hash = window.location.hash;
+    setWords(wordsForHash(hash) ?? 'inspirations');
+    showScreen(screenForHash(hash), false);
+    return;
+  }
+
+  for (const node of document.querySelectorAll<HTMLElement>('.app-screen')) {
+    node.classList.remove('is-active');
+    node.removeAttribute('aria-hidden');
+  }
+  for (const item of document.querySelectorAll<HTMLAnchorElement>('.app-nav__item')) {
+    item.removeAttribute('aria-current');
+  }
+  delete root.dataset['screen'];
+  delete root.dataset['words'];
+}
+
+function renderWordsCounts(): void {
+  const counts: Record<WordsKind, number> = { inspirations: 0, reflections: 0 };
+  for (const entry of entries) {
+    const kind: WordsKind = entry.kind === 'inspiration' ? 'inspirations' : 'reflections';
+    counts[kind] += 1;
+  }
+  for (const kind of ['inspirations', 'reflections'] as const) {
+    const node = document.getElementById(`words-count-${kind}`);
+    if (node !== null) node.textContent = String(counts[kind]);
+  }
+}
+
+function renderCarrierFromHash(): void {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#ack=')) return;
+  const payload = decodeAck(hash.slice('#ack='.length), validEntryIds);
+  if (payload !== null) renderCarrier(payload);
+}
+
 /* ------------------------------------------------------------------- boot */
 
 /**
@@ -730,8 +896,11 @@ function renderRarityLegend(): void {
 }
 
 function renderYear(): void {
-  const node = document.querySelector<HTMLSpanElement>('#year');
-  if (node !== null) node.textContent = String(new Date().getFullYear());
+  const year = String(new Date().getFullYear());
+  for (const id of ['year', 'year-mobile']) {
+    const node = document.getElementById(id);
+    if (node !== null) node.textContent = year;
+  }
 }
 
 const ENGINE_LABEL: Record<StorageEngine, string> = {
@@ -831,8 +1000,16 @@ function renderCarrier(payload: AckPayload): void {
       card.remove();
       window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
       toast(duplicate ? 'Already held on this device.' : 'Acknowledgment added to this device.');
-      if (entry !== undefined) scrollToEntry(entry.id);
-      else query<HTMLElement>('#voices').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (entry !== undefined) {
+        if (isMobileSurface()) {
+          setWords(entry.kind === 'reflection' ? 'reflections' : 'inspirations');
+          showScreen('words');
+        }
+        scrollToEntry(entry.id);
+      } else {
+        if (isMobileSurface()) showScreen('respond');
+        query<HTMLElement>('#voices').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     });
   });
 
@@ -1060,6 +1237,69 @@ query<HTMLButtonElement>('#portal-qr').addEventListener('click', () => {
   });
 });
 
+query<HTMLButtonElement>('#home-qr').addEventListener('click', () => {
+  openShare({
+    title: 'Carry the portal',
+    text: SITE_TAGLINE,
+    url: `${shareOrigin()}/`,
+    qr: true,
+  });
+});
+
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-words-btn]')) {
+  button.addEventListener('click', () => {
+    const kind: WordsKind = button.dataset['wordsBtn'] === 'reflections'
+      ? 'reflections'
+      : 'inspirations';
+    setWords(kind, true);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  });
+}
+
+document.addEventListener('click', (event) => {
+  if (!isMobileSurface()) return;
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+
+  const anchor = target.closest<HTMLAnchorElement>('a[href^="#"]');
+  if (anchor === null) return;
+  const href = anchor.getAttribute('href');
+  if (href === null) return;
+  if (href === '#main') return;
+
+  event.preventDefault();
+  navigate(href, !anchor.classList.contains('app-nav__item'));
+});
+
+const brandHome = document.querySelector<HTMLAnchorElement>('.brand');
+brandHome?.addEventListener('click', (event) => {
+  if (!isMobileSurface()) return;
+  event.preventDefault();
+  navigate('#home');
+});
+
+window.addEventListener('hashchange', () => {
+  if (!isMobileSurface()) return;
+  const hash = window.location.hash;
+  const words = wordsForHash(hash);
+  if (words !== null) setWords(words);
+  showScreen(screenForHash(hash));
+  renderCarrierFromHash();
+  window.setTimeout(() => revealTarget(hash), 40);
+});
+
+window.addEventListener('popstate', () => {
+  if (!isMobileSurface()) return;
+  const hash = window.location.hash;
+  const words = wordsForHash(hash);
+  if (words !== null) setWords(words);
+  showScreen(screenForHash(hash));
+  renderCarrierFromHash();
+  window.setTimeout(() => revealTarget(hash), 40);
+});
+
+mobileQuery.addEventListener('change', applySurface);
+
 query<HTMLButtonElement>('#giving-download').addEventListener('click', () => {
   downloadCanvas(query<HTMLCanvasElement>('#giving-qr'), 'sir-collins-giving-plan-qr.png');
   toast('Giving QR saved.');
@@ -1110,13 +1350,16 @@ async function boot(): Promise<void> {
   renderYear();
   writeJsonLd(entries, readSkills());
   renderEntries(entries);
+  renderWordsCounts();
 
   store = await createSovereignStore();
   reportStorage(store.engine);
   state = parseState(await store.get<unknown>(STATE_KEY));
   await store.remove(LEGACY_TEASERS_KEY);
   refreshAll();
-  initReveal();
+  applySurface();
+  document.documentElement.dataset['appReady'] = 'true';
+  if (!isMobileSurface()) initReveal();
 
   const rawCarrier = window.location.hash.startsWith('#ack=')
     ? window.location.hash.slice('#ack='.length)
@@ -1131,6 +1374,8 @@ async function boot(): Promise<void> {
   } else if (window.location.hash.startsWith('#entry-')) {
     const entryId = window.location.hash.slice('#entry-'.length);
     window.setTimeout(() => scrollToEntry(entryId), 120);
+  } else if (window.location.hash !== '') {
+    window.setTimeout(() => revealTarget(window.location.hash), 120);
   }
 
   document.documentElement.dataset['ready'] = 'true';

@@ -80,7 +80,7 @@ export const ACK_ROLE_LABEL: Record<AckRole, string> = {
 
 export const ACK_ROLE_DESCRIPTION: Record<AckRole, string> = {
   observer: 'I read and observed.',
-  aspirant: 'A potential member willing to be a recognized member of Sir Collins Community.',
+  aspirant: 'A potential member willing to be recognized as a member of Sir Collins Community.',
   communicator: 'I spoke or reshared this.',
   // "A honorable" is Sir Collins's exact wording; kept verbatim by instruction.
   'active-member': 'A honorable member active within Sir Collins Community.',

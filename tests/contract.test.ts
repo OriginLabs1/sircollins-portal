@@ -42,7 +42,7 @@ describe('role copy', () => {
     expect(ACK_ROLE_DESCRIPTION).toEqual({
       observer: 'I read and observed.',
       aspirant:
-        'A potential member willing to be a recognized member of Sir Collins Community.',
+        'A potential member willing to be recognized as a member of Sir Collins Community.',
       communicator: 'I spoke or reshared this.',
       'active-member': 'A honorable member active within Sir Collins Community.',
       responder: 'I acted on this or created from it.',

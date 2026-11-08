@@ -91,8 +91,8 @@ contracts.
 
 | Surface | Role | Status |
 | --- | --- | --- |
-| **Web PWA** | Canonical implementation and reference behaviour | Production (`v0.0.1`) |
-| **Android app (bundled WebView)** | Installable app on Android, same web core, no fork, works offline | Shipped `v0.0.3` |
+| **Web PWA** | Canonical implementation and reference behaviour | Production (`v0.0.4`) |
+| **Android app (bundled WebView)** | Installable app on Android, same web core, no fork, works offline | Shipped `v0.0.4` |
 | **Native surfaces (KMP/Compose)** | Optional offline reading, giving plan, notifications — only on evidence | Decision gate, not committed |
 | **Carrier links** (`#ack=…`) | Device-to-device transport of one acknowledgment | Production |
 | **Telegram** | Community and Giving Plan transport; not a data store | Production (link) |
@@ -163,7 +163,7 @@ Lightest claim to deepest. Labels and descriptions are a copy contract; do not p
 | Role id | Label | Description (verbatim) | Weight |
 | --- | --- | --- | --- |
 | `observer` | Observer | I read and observed. | 1 |
-| `aspirant` | Membership Aspirant | A potential member willing to be a recognized member of Sir Collins Community. | 1 |
+| `aspirant` | Membership Aspirant | A potential member willing to be recognized as a member of Sir Collins Community. | 1 |
 | `communicator` | Communicator | I spoke or reshared this. | 2 |
 | `active-member` | Active Member | A honorable member active within Sir Collins Community. | 2 |
 | `responder` | Responder | I acted on this or created from it. | 3 |

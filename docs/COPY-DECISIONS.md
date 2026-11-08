@@ -183,7 +183,7 @@ incomplete.
 | Role id | Label (new) | Description (new, verbatim) | Old description |
 | --- | --- | --- | --- |
 | `observer` | Observer | I read and observed. | I have read and held this. |
-| `aspirant` | Membership Aspirant | A potential member willing to be a recognized member of Sir Collins Community. | A potential member who is willing to be recognized as a honorable member… |
+| `aspirant` | Membership Aspirant | A potential member willing to be recognized as a member of Sir Collins Community. | A potential member who is willing to be recognized as a honorable member… |
 | `communicator` | Communicator | I spoke or reshared this. | I have shared or spoken this. |
 | `active-member` | **Active Member** | A honorable member active within Sir Collins Community. | (unchanged text) |
 | `responder` | Responder | I acted on this or created from it. | (unchanged) |

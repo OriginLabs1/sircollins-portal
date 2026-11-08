@@ -270,7 +270,7 @@ public class MainActivity extends Activity {
                 + "<style>body{background:" + NIGHT + ";color:#eef1ff;font:16px system-ui;"
                 + "display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;"
                 + "padding:24px}p{max-width:34ch;line-height:1.6;color:#a7aecb}"
-                + "a{color:#f0b429}</style></head><body><div>"
+                + "a{color:#9ec1e6}</style></head><body><div>"
                 + "<h1>Sir Collins Portal</h1>"
                 + "<p>The bundled copy could not be read. Reinstall the app from "
                 + "github.com/OriginLabs1/sircollins-portal/releases, then open it again.</p>"
