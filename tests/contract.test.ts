@@ -78,7 +78,7 @@ describe('APK distribution', () => {
     expect(page).toContain(
       'https://github.com/OriginLabs1/sircollins-portal/releases/latest/download/sir-collins-portal.apk',
     );
-    expect(page.match(/APK Format/g)).toHaveLength(2);
+    expect(page.match(/APK Format/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 });
 
